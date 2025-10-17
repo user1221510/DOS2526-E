@@ -478,19 +478,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Kiko\\.nuget\\packages\\": {}
+    "/home/vasco/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Kiko\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj",
+      "projectUniqueName": "/home/vasco/Documents/GitHub/BaseProject/ProductsAPI.csproj",
       "projectName": "ProductsAPI",
-      "projectPath": "C:\\Users\\Kiko\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj",
-      "packagesPath": "C:\\Users\\Kiko\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Kiko\\Documents\\GitHub\\DOS2526-E\\obj\\",
+      "projectPath": "/home/vasco/Documents/GitHub/BaseProject/ProductsAPI.csproj",
+      "packagesPath": "/home/vasco/.nuget/packages/",
+      "outputPath": "/home/vasco/Documents/GitHub/BaseProject/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Kiko\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "/home/vasco/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -514,7 +514,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "9.0.100"
     },
     "frameworks": {
       "net9.0": {
@@ -540,6 +540,12 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[9.0.9, 9.0.9]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -548,7 +554,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.110/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
