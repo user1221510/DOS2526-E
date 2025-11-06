@@ -15,43 +15,42 @@ namespace ProductsAPI.Controllers
         };
 
         [HttpGet]
-        public ActionResult<IEnumerable<Supplier>> GetAll() => Ok(_suppliers);
+        public ActionResult<IEnumerable<Supplier>> GetSuppliers() => Ok(_suppliers);
 
         [HttpGet("{id}")]
-        public ActionResult<Supplier> GetById(int id)
+        public ActionResult<Supplier> GetSupplier(int id)
         {
             var supplier = _suppliers.FirstOrDefault(s => s.Id == id);
             return supplier == null ? NotFound() : Ok(supplier);
         }
 
         [HttpPost]
-        public ActionResult<Supplier> Create(Supplier supplier)
+        public ActionResult<Supplier> CreateSupplier(Supplier supplier)
         {
             supplier.Id = _suppliers.Any() ? _suppliers.Max(s => s.Id) + 1 : 1;
             _suppliers.Add(supplier);
-            return CreatedAtAction(nameof(GetById), new { id = supplier.Id }, supplier);
+            return CreatedAtAction(nameof(GetSupplier), new { id = supplier.Id }, supplier);
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(int id, Supplier supplier)
+        public IActionResult UpdateSupplier(int id, Supplier updatedSupplier)
         {
             var existing = _suppliers.FirstOrDefault(s => s.Id == id);
             if (existing == null) return NotFound();
 
-            existing.Name = supplier.Name;
-            existing.Email = supplier.Email;
-            return NoContent();
+            existing.Name = updatedSupplier.Name;
+            existing.Email = updatedSupplier.Email;
+            return NoContent(); // Retorna 204 NoContent
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public IActionResult DeleteSupplier(int id)
         {
             var existing = _suppliers.FirstOrDefault(s => s.Id == id);
             if (existing == null) return NotFound();
 
             _suppliers.Remove(existing);
-            return NoContent();
-        }
+            return NoContent(); 
     }
 
     public class Supplier

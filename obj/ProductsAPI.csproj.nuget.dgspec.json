@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/home/vasco/Documents/GitHub/BaseProject/ProductsAPI.csproj": {}
+    "C:\\Users\\vasc0\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj": {}
   },
   "projects": {
-    "/home/vasco/Documents/GitHub/BaseProject/ProductsAPI.csproj": {
+    "C:\\Users\\vasc0\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/vasco/Documents/GitHub/BaseProject/ProductsAPI.csproj",
+        "projectUniqueName": "C:\\Users\\vasc0\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj",
         "projectName": "ProductsAPI",
-        "projectPath": "/home/vasco/Documents/GitHub/BaseProject/ProductsAPI.csproj",
-        "packagesPath": "/home/vasco/.nuget/packages/",
-        "outputPath": "/home/vasco/Documents/GitHub/BaseProject/obj/",
+        "projectPath": "C:\\Users\\vasc0\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj",
+        "packagesPath": "C:\\Users\\vasc0\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\vasc0\\Documents\\GitHub\\DOS2526-E\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/vasco/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\vasc0\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -38,7 +38,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.100"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net9.0": {
@@ -64,12 +64,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[9.0.9, 9.0.9]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -78,7 +72,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.110/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
