@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
-using ProductsAPI.Models; // Usar namespace dos modelos
+using ProductsAPI.Models; // Acede aos modelos Supplier e Product
 
 namespace ProductsAPI.Controllers
 {
@@ -9,18 +9,19 @@ namespace ProductsAPI.Controllers
     [Route("api/[controller]")]
     public class SupplierController : ControllerBase
     {
-        // Mock data de Suppliers, inicializando a lista de Products
+        // O modelo Supplier deve ter sido movido para ProductsAPI.Models.
         private static readonly List<Supplier> _suppliers = new()
         {
-            new Supplier { Id = 1, Name = "Tech Components Ltda", Email = "contato@techcomp.com", Products = new List<Product>() },
-            new Supplier { Id = 2, Name = "GlobalParts S.A.", Email = "vendas@globalparts.com", Products = new List<Product>() }
+            // Inicialização simples
+            new Supplier { Id = 1, Name = "Tech Components Ltda", Email = "contato@techcomp.com" },
+            new Supplier { Id = 2, Name = "GlobalParts S.A.", Email = "vendas@globalparts.com" }
         };
 
-        // 1. GetSuppliers() (Antigo GetAll())
+        // ... (GetSuppliers, GetSupplier, CreateSupplier, DeleteSupplier mantidos)
+
         [HttpGet]
         public ActionResult<IEnumerable<Supplier>> GetSuppliers() => Ok(_suppliers);
 
-        // 2. GetSupplier(int id) (Antigo GetById(int id))
         [HttpGet("{id}")]
         public ActionResult<Supplier> GetSupplier(int id)
         {
@@ -28,7 +29,6 @@ namespace ProductsAPI.Controllers
             return supplier == null ? NotFound() : Ok(supplier);
         }
 
-        // 3. CreateSupplier(Supplier supplier) (Antigo Add(Supplier supplier))
         [HttpPost]
         public ActionResult<Supplier> CreateSupplier(Supplier supplier)
         {
@@ -38,7 +38,6 @@ namespace ProductsAPI.Controllers
             return CreatedAtAction(nameof(GetSupplier), new { id = supplier.Id }, supplier);
         }
 
-        // 4. UpdateSupplier(Supplier updatedSupplier)
         [HttpPut("{id}")]
         public IActionResult UpdateSupplier(int id, Supplier updatedSupplier)
         {
@@ -47,13 +46,11 @@ namespace ProductsAPI.Controllers
 
             existing.Name = updatedSupplier.Name;
             existing.Email = updatedSupplier.Email;
-            // Atualiza a lista de Products (se fornecida no payload)
             if(updatedSupplier.Products != null) existing.Products = updatedSupplier.Products; 
             
-            return NoContent(); // Retorna 204 NoContent
+            return NoContent();
         }
 
-        // 5. DeleteSupplier(int id)
         [HttpDelete("{id}")]
         public IActionResult DeleteSupplier(int id)
         {
