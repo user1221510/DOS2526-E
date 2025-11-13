@@ -8,5 +8,8 @@ namespace ProductsAPI.Models
         public string Description { get; set; }
         public double TotalPrice { get; set; }
         public List<Product> Products { get; set; } = new();
+    
+         public int UserID { get; set; }
+         public User User { get; set; }
     }
 }
