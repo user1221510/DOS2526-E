@@ -4,7 +4,6 @@ namespace ProductsAPI.Models
 {
     public class Product
     {
-        // Campos existentes
         public int Id { get; set; }
         public string Name { get; set; }
         public decimal Price { get; set; }

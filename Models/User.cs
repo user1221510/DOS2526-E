@@ -4,7 +4,6 @@ namespace ProductsAPI.Models
 {
     public class User
     {
-        // Campos existentes
         public int Id { get; set; } 
         public string Username { get; set; } 
         public string Email { get; set; } 

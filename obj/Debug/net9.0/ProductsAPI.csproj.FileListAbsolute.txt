@@ -142,3 +142,15 @@ c:\Users\vasc0\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\refint\ProductsAPI.dl
 c:\Users\vasc0\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.pdb
 C:\Users\vasc0\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.genruntimeconfig.cache
 C:\Users\vasc0\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ref\ProductsAPI.dll
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.csproj.AssemblyReference.cache
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\rpswa.dswa.cache.json
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.AssemblyInfoInputs.cache
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.AssemblyInfo.cs
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.csproj.CoreCompileInputs.cache
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.sourcelink.json
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.dll
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\refint\ProductsAPI.dll
+C:\Users\Kiko\Documents\GitHub\DOS2526-E\obj\Debug\net9.0\ProductsAPI.pdb
