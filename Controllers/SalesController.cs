@@ -9,7 +9,14 @@ namespace ProductsAPI.Controllers
     [Route("api/[controller]")]
     public class SalesController : ControllerBase
     {
-        private static readonly User MockUser = new User { Id = 1, Username = "joaos", Email = "joao@example.com", FullName = "João Silva", Role = "Admin" };
+        // Mock data de Produtos/Users simples para referÃªncias
+        private static readonly List<Product> MockProducts = new List<Product>
+        {
+            new Product { Id = 1, Name = "Mouse", Price = 25.50M },
+            new Product { Id = 2, Name = "Teclado", Price = 45.20M }
+        };
+        private static readonly User MockUser = new User { Id = 1, Username = "joaos", Email = "joao@example.com", FullName = "JoÃ£o Silva", Role = "Admin" };
+
 
         private static readonly List<Sale> _sales = new()
         {
@@ -18,15 +25,13 @@ namespace ProductsAPI.Controllers
                 Id = 1,
                 Description = "Venda 1",
                 TotalPrice = 70.70,
-                Products = new List<Product>
-                {
-                    new Product { Id = 1, Name = "Mouse", Price = 25.50M },
-                    new Product { Id = 2, Name = "Teclado", Price = 45.20M }
-                },
+                Products = MockProducts, // Associa os mocks
                 UserID = MockUser.Id, 
                 User = MockUser 
             }
         };
+
+        // ... (GetSales, GetSale, Create, Update, Delete mantidos)
 
         [HttpGet]
         public ActionResult<IEnumerable<Sale>> GetSales()
@@ -48,10 +53,10 @@ namespace ProductsAPI.Controllers
         {
             sale.Id = _sales.Any() ? _sales.Max(s => s.Id) + 1 : 1;
             sale.Products ??= new List<Product>();
-            
-            if (sale.User != null)
+            // Em um cenÃ¡rio real, vocÃª validaria se o User existe
+            if (sale.UserID > 0)
             {
-                sale.UserID = sale.User.Id;
+                // Simula que o User foi encontrado e anexado
                 sale.User = MockUser; 
             }
             
@@ -70,14 +75,13 @@ namespace ProductsAPI.Controllers
             existing.TotalPrice = updatedSale.TotalPrice;
             existing.Products = updatedSale.Products;
             
-            // Atualiza as propriedades de relação
             existing.UserID = updatedSale.UserID;
             existing.User = updatedSale.User;
 
             return NoContent();
         }
 
-         [HttpDelete("{id}")]
+        [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
             var existing = _sales.FirstOrDefault(s => s.Id == id);
@@ -86,6 +90,6 @@ namespace ProductsAPI.Controllers
 
             _sales.Remove(existing);
             return NoContent();
-        }
+        }
     }
 }
