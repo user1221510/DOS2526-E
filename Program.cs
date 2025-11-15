@@ -1,15 +1,28 @@
+using Microsoft.EntityFrameworkCore;
+using ProductsAPI.Data;
+using ProductsAPI.Repositories;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// (Opcional) configurações, serviços
+// Configuração do DbContext para usar SQL Server
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
 
+// Registrando os repositórios
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ISaleRepository, SaleRepository>();
+builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Configuração dos controladores e Swagger
 builder.Services.AddControllers();
-// Swagger / OpenAPI (recomendado para testes)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Middleware do pipeline
+// Configuração do middleware do pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -17,10 +30,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection();  // opcional
-
 app.UseRouting();
-
 app.UseAuthorization();
 
 app.MapControllers();
