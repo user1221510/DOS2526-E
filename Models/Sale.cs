@@ -10,6 +10,6 @@ namespace ProductsAPI.Models
         public List<Product> Products { get; set; } = new();
     
          public int UserID { get; set; }
-         public User User { get; set; }
+         public User User { get; set; }
     }
 }

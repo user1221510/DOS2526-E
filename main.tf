@@ -1,56 +1,54 @@
-# Configuração do Terraform
+# 1. Configurar o Provider Docker
 terraform {
   required_providers {
     docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 3.0" # Use a versão mais recente do provider Docker
+      source = "kreuzwerker/docker"
+      version = "~> 3.0.1"
     }
   }
 }
 
-# Configuração do provider Docker
 provider "docker" {}
 
-# Cria o container do SQL Server
-resource "docker_container" "mssql_db" {
-  name  = "sql_server_devops_pratica5"
-  # Imagem solicitada (microsoft/mssql-server é agora mcr.microsoft.com/mssql/server)
-  image = "mcr.microsoft.com/mssql/server:latest" 
+# 2. Configurar a Imagem do SQL Server
+resource "docker_image" "mssql_server" {
+  name = "microsoft/mssql-server:latest"
+}
 
-  # Variáveis de Ambiente Essenciais para o SQL Server
+# 3. Configurar o Container
+resource "docker_container" "mssql_db" {
+  name  = "mssql-dev"
+  image = docker_image.mssql_server.name
+  
+  # Variáveis de ambiente obrigatórias para o SQL Server
   env = [
-    "ACCEPT_EULA=Y",
-    # Mude esta password para uma forte, complexa, e segura!
-    "SA_PASSWORD=YourComplexPassword#123", 
+    "ACCEPT_EULA=Y", 
+    "SA_PASSWORD=YourStrongPassword!123" # Altere a password
   ]
 
-  # Configuração da Porta de Acesso Exterior (Requisito)
+  # 4. Configuração de Memória (2GB)
+  memory = 2048 # em Megabytes
+
+  # 5. Mapeamento de Porta (exemplo: 1433 local -> 1433 container)
   ports {
-    internal = 1433 # Porta interna padrão do SQL Server
-    external = 1433 # Porta mapeada para o exterior
+    internal = 1433
+    external = 1433
   }
-
-  # Configuração de Limite de RAM (2GB = 2048 MB) (Requisito)
-  # O limite é definido em MB
-  resource_limits {
-    memory = 2048 
-  }
-
-  # Ponto Extra: Volume Persistente para Dados do SQL Server
-  # Garante que os dados da base de dados não se perdem ao parar/remover o container
+  
+  # 6. Pontos Extra: Persistência (Exemplo de Bind Mount)
+  # Certifique-se que a pasta 'data_sql' existe no seu host
   volumes {
-    # Altere este caminho (`host_path`) para uma pasta existente no seu sistema operativo!
-    host_path      = "/data/mssql_pratica5"
+    host_path      = "/caminho/para/sua/pasta/data_sql"
     container_path = "/var/opt/mssql"
   }
-
-  # Ponto Extra: Implementação de Health Check
-  # Garante que o container só é considerado "saudável" após o serviço SQL estar pronto
+  
+  # 7. Pontos Extra: Health Check
   healthcheck {
-    test     = ["CMD-SHELL", "/opt/mssql/bin/sqlservr & /opt/mssql/bin/mssql-conf set-sa-password"]
+    test = ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourStrongPassword!123", "-Q", "SELECT 1"]
     interval = "30s"
-    timeout  = "10s"
+    timeout  = "5s"
     retries  = 5
-    start_period = "30s" # Espera inicial para o SQL Server iniciar
+    start_period = "30s"
   }
+
 }

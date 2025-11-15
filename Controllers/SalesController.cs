@@ -9,7 +9,7 @@ namespace ProductsAPI.Controllers
     [Route("api/[controller]")]
     public class SalesController : ControllerBase
     {
-        private static readonly User MockUser = new User { Id = 1, Username = "joaos", Email = "joao@example.com", FullName = "Joï¿½o Silva", Role = "Admin" };
+        private static readonly User MockUser = new User { Id = 1, Username = "joaos", Email = "joao@example.com", FullName = "João Silva", Role = "Admin" };
 
         private static readonly List<Sale> _sales = new()
         {
@@ -70,7 +70,7 @@ namespace ProductsAPI.Controllers
             existing.TotalPrice = updatedSale.TotalPrice;
             existing.Products = updatedSale.Products;
             
-            // Atualiza as propriedades de relaï¿½ï¿½o
+            // Atualiza as propriedades de relação
             existing.UserID = updatedSale.UserID;
             existing.User = updatedSale.User;
 
@@ -86,6 +86,6 @@ namespace ProductsAPI.Controllers
 
             _sales.Remove(existing);
             return NoContent();
- }
+        }
     }
 }
