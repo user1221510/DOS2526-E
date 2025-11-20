@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Kiko\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj": {}
+    "C:\\Users\\vasc0\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Kiko\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj": {
+    "C:\\Users\\vasc0\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Kiko\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj",
+        "projectUniqueName": "C:\\Users\\vasc0\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj",
         "projectName": "ProductsAPI",
-        "projectPath": "C:\\Users\\Kiko\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj",
-        "packagesPath": "C:\\Users\\Kiko\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Kiko\\Documents\\GitHub\\DOS2526-E\\obj\\",
+        "projectPath": "C:\\Users\\vasc0\\Documents\\GitHub\\DOS2526-E\\ProductsAPI.csproj",
+        "packagesPath": "C:\\Users\\vasc0\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\vasc0\\Documents\\GitHub\\DOS2526-E\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Kiko\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\vasc0\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -44,13 +44,27 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "FluentAssertions": {
+              "target": "Package",
+              "version": "[8.8.0, )"
+            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
-              "version": "[9.0.10, )"
+              "version": "[9.0.0, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
-              "version": "[9.0.6, )"
+              "version": "[6.6.2, )"
+            },
+            "xunit": {
+              "target": "Package",
+              "version": "[2.9.3, )"
+            },
+            "xunit.runner.visualstudio": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[3.1.5, )"
             }
           },
           "imports": [
@@ -72,7 +86,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
