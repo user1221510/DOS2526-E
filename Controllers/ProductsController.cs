@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using ProductsAPI.Data;
 using ProductsAPI.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,60 +10,57 @@ namespace ProductsAPI.Controllers
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {
-        // Mock data simples (não tenta inicializar o Supplier completo aqui para evitar erros)
-        private static readonly List<Product> _products = new()
+        private readonly AppDbContext _context;
+
+        // ESTE É O CONSTRUTOR QUE FALTAVA
+        public ProductsController(AppDbContext context)
         {
-            // No mundo real, usaríamos apenas o ID do Supplier
-            new Product { Id = 1, Name = "Mouse", Price = 25.50M },
-            new Product { Id = 2, Name = "Teclado", Price = 45.20M }
-        };
+            _context = context;
+        }
 
         [HttpGet]
         public ActionResult<IEnumerable<Product>> GetAll()
         {
-            return Ok(_products);
+            return Ok(_context.Products.ToList());
         }
 
         [HttpGet("{id}")]
         public ActionResult<Product> GetById(int id)
         {
-            var prod = _products.FirstOrDefault(p => p.Id == id);
-            if (prod == null)
-                return NotFound();
+            var prod = _context.Products.FirstOrDefault(p => p.Id == id);
+            if (prod == null) return NotFound();
             return Ok(prod);
         }
 
         [HttpPost]
         public ActionResult<Product> Create(Product product)
         {
-            product.Id = _products.Any() ? _products.Max(p => p.Id) + 1 : 1;
-            product.Suppliers ??= new List<Supplier>();
-            _products.Add(product);
+            _context.Products.Add(product);
+            _context.SaveChanges();
             return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
         }
 
         [HttpPut("{id}")]
         public IActionResult Update(int id, Product product)
         {
-            var existing = _products.FirstOrDefault(p => p.Id == id);
-            if (existing == null)
-                return NotFound();
+            var existing = _context.Products.FirstOrDefault(p => p.Id == id);
+            if (existing == null) return NotFound();
 
             existing.Name = product.Name;
             existing.Price = product.Price;
-            if(product.Suppliers != null) existing.Suppliers = product.Suppliers;
             
+            _context.SaveChanges();
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            var existing = _products.FirstOrDefault(p => p.Id == id);
-            if (existing == null)
-                return NotFound();
+            var existing = _context.Products.FirstOrDefault(p => p.Id == id);
+            if (existing == null) return NotFound();
 
-            _products.Remove(existing);
+            _context.Products.Remove(existing);
+            _context.SaveChanges();
             return NoContent();
         }
     }

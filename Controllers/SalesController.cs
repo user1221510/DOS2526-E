@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ProductsAPI.Data;
 using ProductsAPI.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,74 +11,64 @@ namespace ProductsAPI.Controllers
     [Route("api/[controller]")]
     public class SalesController : ControllerBase
     {
-        // Mock data de Produtos/Users simples para referências
-        private static readonly List<Product> MockProducts = new List<Product>
+        private readonly AppDbContext _context;
+
+        public SalesController(AppDbContext context)
         {
-            new Product { Id = 1, Name = "Mouse", Price = 25.50M },
-            new Product { Id = 2, Name = "Teclado", Price = 45.20M }
-        };
-        private static readonly User MockUser = new User { Id = 1, Username = "joaos", Email = "joao@example.com", FullName = "João Silva", Role = "Admin" };
-
-
-        private static readonly List<Sale> _sales = new()
-        {
-            new Sale
-            {
-                Id = 1,
-                Description = "Venda 1",
-                TotalPrice = 70.70,
-                Products = MockProducts, // Associa os mocks
-                UserID = MockUser.Id, 
-                User = MockUser 
-            }
-        };
-
-        // ... (GetSales, GetSale, Create, Update, Delete mantidos)
+            _context = context;
+        }
 
         [HttpGet]
         public ActionResult<IEnumerable<Sale>> GetSales()
         {
-            return Ok(_sales);
+            var sales = _context.Sales
+                .Include(s => s.User)
+                .Include(s => s.Products)
+                .ToList();
+            return Ok(sales);
         }
 
         [HttpGet("{id}")]
         public ActionResult<Sale> GetSale(int id)
         {
-            var sale = _sales.FirstOrDefault(s => s.Id == id);
-            if (sale == null)
-                return NotFound();
+            var sale = _context.Sales
+                .Include(s => s.User)
+                .Include(s => s.Products)
+                .FirstOrDefault(s => s.Id == id);
+
+            if (sale == null) return NotFound();
             return Ok(sale);
         }
 
         [HttpPost]
         public ActionResult<Sale> Create(Sale sale)
         {
-            sale.Id = _sales.Any() ? _sales.Max(s => s.Id) + 1 : 1;
-            sale.Products ??= new List<Product>();
-            // Em um cenário real, você validaria se o User existe
-            if (sale.UserID > 0)
-            {
-                // Simula que o User foi encontrado e anexado
-                sale.User = MockUser; 
-            }
+            // Validar se o User existe
+            var user = _context.Users.Find(sale.UserID);
+            if (user == null) return BadRequest("User not found");
+            sale.User = user;
+
+            // Nota: Os produtos devem ser geridos com cuidado para não duplicar, 
+            // mas para este exercício simples, assumimos que vêm corretos ou vazios.
             
-            _sales.Add(sale);
+            _context.Sales.Add(sale);
+            _context.SaveChanges();
+            
             return CreatedAtAction(nameof(GetSale), new { id = sale.Id }, sale);
         }
 
         [HttpPut("{id}")]
         public IActionResult Update(int id, Sale updatedSale)
         {
-            var existing = _sales.FirstOrDefault(s => s.Id == id);
-            if (existing == null)
-                return NotFound();
+            var existing = _context.Sales.FirstOrDefault(s => s.Id == id);
+            if (existing == null) return NotFound();
 
             existing.Description = updatedSale.Description;
             existing.TotalPrice = updatedSale.TotalPrice;
-            existing.Products = updatedSale.Products;
             
-            existing.UserID = updatedSale.UserID;
-            existing.User = updatedSale.User;
+            // Atualizar relações é mais complexo no EF Core, 
+            // mas para campos simples isto basta:
+            _context.SaveChanges();
 
             return NoContent();
         }
@@ -84,11 +76,11 @@ namespace ProductsAPI.Controllers
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            var existing = _sales.FirstOrDefault(s => s.Id == id);
-            if (existing == null)
-                return NotFound();
+            var existing = _context.Sales.FirstOrDefault(s => s.Id == id);
+            if (existing == null) return NotFound();
 
-            _sales.Remove(existing);
+            _context.Sales.Remove(existing);
+            _context.SaveChanges();
             return NoContent();
         }
     }

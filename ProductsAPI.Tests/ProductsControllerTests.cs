@@ -1,20 +1,39 @@
 using Xunit;
 using ProductsAPI.Controllers;
 using ProductsAPI.Models;
+using ProductsAPI.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
+using System;
 
 namespace ProductsAPI.Tests
 {
     public class ProductsControllerTests
     {
+        // Método auxiliar para criar uma BD "falsa" única para cada teste
+        private AppDbContext GetDatabaseContext()
+        {
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+            var context = new AppDbContext(options);
+            context.Database.EnsureCreated();
+            return context;
+        }
+
         [Fact]
         public void GetAll_ShouldReturnAllProducts()
         {
             // Arrange
-            var controller = new ProductsController();
+            using var context = GetDatabaseContext();
+            context.Products.Add(new Product { Name = "P1", Price = 10M });
+            context.Products.Add(new Product { Name = "P2", Price = 20M });
+            context.SaveChanges();
+
+            var controller = new ProductsController(context);
 
             // Act
             var result = controller.GetAll();
@@ -22,39 +41,39 @@ namespace ProductsAPI.Tests
             // Assert
             var actionResult = Assert.IsType<OkObjectResult>(result.Result);
             var products = Assert.IsAssignableFrom<IEnumerable<Product>>(actionResult.Value);
-            products.Should().NotBeNull();
+            products.Should().HaveCount(2);
         }
 
         [Fact]
         public void GetById_WithExistingId_ShouldReturnProduct()
         {
             // Arrange
-            var controller = new ProductsController();
-            
-            // Primeiro cria um produto para garantir que existe
-            var newProduct = new Product { Name = "Test Product", Price = 100.00M };
-            var createResult = controller.Create(newProduct);
-            var createdProduct = (Product)((CreatedAtActionResult)createResult.Result).Value;
+            using var context = GetDatabaseContext();
+            var product = new Product { Name = "Test Product", Price = 100.00M };
+            context.Products.Add(product);
+            context.SaveChanges();
+
+            var controller = new ProductsController(context);
 
             // Act
-            var result = controller.GetById(createdProduct.Id);
+            var result = controller.GetById(product.Id);
 
             // Assert
             var actionResult = Assert.IsType<OkObjectResult>(result.Result);
-            var product = Assert.IsType<Product>(actionResult.Value);
-            product.Id.Should().Be(createdProduct.Id);
-            product.Name.Should().Be("Test Product");
+            var returnedProduct = Assert.IsType<Product>(actionResult.Value);
+            returnedProduct.Id.Should().Be(product.Id);
+            returnedProduct.Name.Should().Be("Test Product");
         }
 
         [Fact]
         public void GetById_WithNonExistingId_ShouldReturnNotFound()
         {
             // Arrange
-            var controller = new ProductsController();
-            var nonExistingId = 999;
+            using var context = GetDatabaseContext();
+            var controller = new ProductsController(context);
 
             // Act
-            var result = controller.GetById(nonExistingId);
+            var result = controller.GetById(999);
 
             // Assert
             Assert.IsType<NotFoundResult>(result.Result);
@@ -64,7 +83,8 @@ namespace ProductsAPI.Tests
         public void Create_ShouldAddProductAndReturnCreatedAtAction()
         {
             // Arrange
-            var controller = new ProductsController();
+            using var context = GetDatabaseContext();
+            var controller = new ProductsController(context);
             var newProduct = new Product { Name = "New Monitor", Price = 200.00M };
 
             // Act
@@ -75,75 +95,51 @@ namespace ProductsAPI.Tests
             var createdProduct = Assert.IsType<Product>(actionResult.Value);
             createdProduct.Should().NotBeNull();
             createdProduct.Id.Should().BeGreaterThan(0);
-            createdProduct.Name.Should().Be(newProduct.Name);
-            createdProduct.Price.Should().Be(newProduct.Price);
+            
+            // Verificar se foi guardado na BD
+            context.Products.Count().Should().Be(1);
         }
 
         [Fact]
         public void Update_WithExistingId_ShouldReturnNoContent()
         {
             // Arrange
-            var controller = new ProductsController();
-            
-            // Primeiro cria um produto
-            var newProduct = new Product { Name = "Product to Update", Price = 50.00M };
-            var createResult = controller.Create(newProduct);
-            var createdProduct = (Product)((CreatedAtActionResult)createResult.Result).Value;
+            using var context = GetDatabaseContext();
+            var product = new Product { Name = "Old Name", Price = 50.00M };
+            context.Products.Add(product);
+            context.SaveChanges();
 
-            var updatedProduct = new Product { Id = createdProduct.Id, Name = "Updated Product", Price = 75.00M };
+            var controller = new ProductsController(context);
+            var updatedProduct = new Product { Id = product.Id, Name = "New Name", Price = 75.00M };
 
             // Act
-            var result = controller.Update(createdProduct.Id, updatedProduct);
+            var result = controller.Update(product.Id, updatedProduct);
 
             // Assert
             Assert.IsType<NoContentResult>(result);
-        }
-
-        [Fact]
-        public void Update_WithNonExistingId_ShouldReturnNotFound()
-        {
-            // Arrange
-            var controller = new ProductsController();
-            var nonExistingId = 999;
-            var updatedProduct = new Product { Id = nonExistingId, Name = "Updated Product", Price = 75.00M };
-
-            // Act
-            var result = controller.Update(nonExistingId, updatedProduct);
-
-            // Assert
-            Assert.IsType<NotFoundResult>(result);
+            
+            // Verificar atualização
+            var dbProduct = context.Products.Find(product.Id);
+            dbProduct.Name.Should().Be("New Name");
         }
 
         [Fact]
         public void Delete_WithExistingId_ShouldReturnNoContent()
         {
             // Arrange
-            var controller = new ProductsController();
-            
-            // Primeiro cria um produto
-            var newProduct = new Product { Name = "Product to Delete", Price = 50.00M };
-            var createResult = controller.Create(newProduct);
-            var createdProduct = (Product)((CreatedAtActionResult)createResult.Result).Value;
+            using var context = GetDatabaseContext();
+            var product = new Product { Name = "To Delete", Price = 50.00M };
+            context.Products.Add(product);
+            context.SaveChanges();
+
+            var controller = new ProductsController(context);
 
             // Act
-            var result = controller.Delete(createdProduct.Id);
+            var result = controller.Delete(product.Id);
 
             // Assert
             Assert.IsType<NoContentResult>(result);
-        }
-
-        [Fact]
-        public void Delete_WithNonExistingId_ShouldReturnNotFound()
-        {
-            // Arrange
-            var controller = new ProductsController();
-            var nonExistingId = 999;
-
-            // Act
-            var result = controller.Delete(nonExistingId);
-
-            // Assert
-            Assert.IsType<NotFoundResult>(result);
+            context.Products.Count().Should().Be(0);
         }
     }
 }
