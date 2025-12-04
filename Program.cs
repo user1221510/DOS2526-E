@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using ProductsAPI.Data; // Importante para encontrar o AppDbContext
+using ProductsAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,51 +13,56 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// --- NOVO: REGISTAR O CONTEXTO DA BASE DE DADOS ---
-// Isto diz à aplicação que o AppDbContext existe e pode ser injetado nos Controllers
-builder.Services.AddDbContext<AppDbContext>();
+// --- MUDANÇA CRUCIAL AQUI (INÍCIO) ---
+// 1. Tenta ler a Connection String do Docker (Variável de Ambiente) ou do appsettings
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// 2. Se a string estiver vazia (caso algo falhe), define um fallback para evitar crash imediato
+if (string.IsNullOrEmpty(connectionString))
+{
+    // Fallback apenas para não dar erro nulo, mas o ideal é vir do Docker
+    connectionString = "Server=sql_server;Database=ProductsDB;User Id=sa;Password=GrupoE2526!;TrustServerCertificate=True;";
+}
+
+// 3. Regista o DbContext usando explicitamente o SQL Server com as opções configuradas
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
 
 var app = builder.Build();
 
 // =========================================================
-// 2. CRIAÇÃO AUTOMÁTICA DA BASE DE DADOS (SOLUÇÃO SEM COMANDOS)
+// 2. CRIAÇÃO AUTOMÁTICA DA BASE DE DADOS
 // =========================================================
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
-        // 1. Pede uma instância do contexto
         var context = services.GetRequiredService<AppDbContext>();
         
-        // 2. Comando mágico: Cria a BD e Tabelas no Docker se não existirem
         bool created = context.Database.EnsureCreated();
         
         if (created)
             Console.WriteLine("--> SUCESSO: Base de Dados e Tabelas criadas no Docker!");
         else
-            Console.WriteLine("--> INFO: A Base de Dados já existe. A saltar criação.");
+            Console.WriteLine("--> INFO: A Base de Dados já existe.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"--> ERRO CRÍTICO: Não foi possível ligar ao SQL Server. Verifique se o Docker está a correr. Erro: {ex.Message}");
+        Console.WriteLine($"--> ERRO CRÍTICO: Não foi possível ligar ao SQL Server.");
+        Console.WriteLine($"--> Erro detalhado: {ex.Message}");
     }
 }
 
 // =========================================================
-// 3. PIPELINE HTTP (IGUAL AO TEU ANTIGO)
+// 3. PIPELINE HTTP
 // =========================================================
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage(); // Mantive do teu original
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseDeveloperExceptionPage();
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProductsAPI v1"));
 
-// app.UseHttpsRedirection(); // Mantive comentado como tinhas
-
-app.UseRouting(); // Mantive do teu original
+app.UseRouting();
 
 app.UseAuthorization();
 
