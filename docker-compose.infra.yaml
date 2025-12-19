@@ -1,0 +1,43 @@
+services:
+  # 6. Portainer 
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: infra-portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+  # 7. Jenkins 
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: infra-jenkins
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+
+  # 8. SonarQube 
+  sonarqube:
+    image: sonarqube:community
+    container_name: infra-sonarqube
+    restart: unless-stopped
+    ports:
+      - "9001:9000"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+
+volumes:
+  portainer_data:
+  jenkins_home:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
