@@ -9,7 +9,7 @@ if [ -z "$IMAGE_NAME" ]; then
 fi
 
 CONTAINER_NAME="dos2526-api-prod"
-HOST_PORT="8050"
+HOST_PORT="8055"
 
 echo "A iniciar Deploy de PRODUÇÃO..."
 echo "Imagem a utilizar: $IMAGE_NAME"
