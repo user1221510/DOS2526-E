@@ -4,7 +4,7 @@ pipeline {
     environment {
         APP_NAME = "dos2526-api"
         DOCKER_IMAGE = "dos2526-api"
-        DOTNET_ENV = "Production" 
+        DOTNET_ENV = "Production"
     }
 
     stages {
@@ -15,13 +15,28 @@ pipeline {
             }
         }
 
+        // --- FASES QUE PRECISAM DE .NET ---
+        // Usamos um agente Docker aqui para ter o comando 'dotnet' disponível
         stage('Restore') {
+            agent {
+                docker { 
+                    image 'mcr.microsoft.com/dotnet/sdk:9.0' 
+                    // O reuseNode garante que usamos o mesmo workspace
+                    reuseNode true 
+                }
+            }
             steps {
                 sh 'dotnet restore'
             }
         }
 
         stage('Test + Coverage') {
+            agent {
+                docker { 
+                    image 'mcr.microsoft.com/dotnet/sdk:9.0' 
+                    reuseNode true 
+                }
+            }
             steps {
                 sh '''
                 dotnet test ProductsAPI.Tests \
@@ -37,15 +52,23 @@ pipeline {
         }
 
         stage('Build .NET') {
+            agent {
+                docker { 
+                    image 'mcr.microsoft.com/dotnet/sdk:9.0' 
+                    reuseNode true 
+                }
+            }
             steps {
                 sh 'dotnet publish -c Release -o publish'
             }
         }
 
+        // --- FASES QUE PRECISAM DE DOCKER (Volta ao agent any/host) ---
         stage('Build Docker Image') {
             steps {
                 script {
-                    def tag = "${env.BUILD_NUMBER}" 
+                    // Se a tag falhar por ser null, usa 'latest' ou um timestamp
+                    def tag = env.BUILD_NUMBER ?: "latest"
                     
                     sh """
                     docker build -t ${DOCKER_IMAGE}:${tag} .
@@ -67,7 +90,7 @@ pipeline {
 
         stage('Deploy PROD') {
             when {
-                branch 'quality'
+                branch 'main' 
             }
             steps {
                 sh 'chmod +x ./deploy/prod.sh'
@@ -84,9 +107,7 @@ pipeline {
                     git config user.email "jenkins@bot.com"
                     git config user.name "Jenkins Bot"
                 """
-                
                 sh "echo 'Deploy efetuado em ' \$(date) > deploy_log.txt"
-                
                 sh """
                     git add deploy_log.txt
                     git commit -m "Jenkins: Update deploy log [skip ci]" || echo "Nada para commitar"
