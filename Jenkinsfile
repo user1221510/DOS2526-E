@@ -30,7 +30,7 @@ pipeline {
             }
             post {
                 always {
-                    junit '**/test-results.trx'
+                    junit '**/TestResults/*.trx'
                 }
             }
         }
@@ -55,10 +55,9 @@ pipeline {
             }
         }
 
-        stage('Deploy (Dev Generico)') {
+        stage('Deploy (Dev/Quality)') {
             when {
-                // Corre em qualquer branch que comece por 'dev_'
-                expression { env.BRANCH_NAME.startsWith('dev_') || env.BRANCH_NAME == 'development' || env.BRANCH_NAME == 'quality' }
+                expression { env.BRANCH_NAME == 'quality' || env.BRANCH_NAME == 'development' || env.BRANCH_NAME.startsWith('dev_') }
             }
             steps {
                 sh 'chmod +x ./deploy/prod.sh'
