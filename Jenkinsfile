@@ -31,6 +31,7 @@ pipeline {
             }
             post {
                 always {
+                    // Lê o resultado em formato XML
                     junit '**/test-results.xml'
                 }
             }
@@ -62,7 +63,7 @@ pipeline {
             }
             steps {
                 sh 'chmod +x ./deploy/prod.sh'
-                sh './deploy/prod.sh'
+                sh "./deploy/prod.sh ${DOCKER_IMAGE}:latest"
             }
         }
 
@@ -72,7 +73,7 @@ pipeline {
             }
             steps {
                 sh 'chmod +x ./deploy/prod.sh'
-                sh './deploy/prod.sh'
+                sh "./deploy/prod.sh ${DOCKER_IMAGE}:latest"
             }
         }
     }
