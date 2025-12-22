@@ -4,45 +4,30 @@ pipeline {
     environment {
         APP_NAME = "dos2526-api"
         DOCKER_IMAGE = "dos2526-api"
-        DOTNET_ENV = "Production"
+        DOTNET_SDK_IMAGE = "mcr.microsoft.com/dotnet/sdk:9.0"
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        // --- FASES QUE PRECISAM DE .NET ---
-        // Usamos um agente Docker aqui para ter o comando 'dotnet' disponível
         stage('Restore') {
-            agent {
-                docker { 
-                    image 'mcr.microsoft.com/dotnet/sdk:9.0' 
-                    // O reuseNode garante que usamos o mesmo workspace
-                    reuseNode true 
-                }
-            }
             steps {
-                sh 'dotnet restore'
+                sh "docker run --rm -v ${WORKSPACE}:/app -w /app ${DOTNET_SDK_IMAGE} dotnet restore"
             }
         }
 
         stage('Test + Coverage') {
-            agent {
-                docker { 
-                    image 'mcr.microsoft.com/dotnet/sdk:9.0' 
-                    reuseNode true 
-                }
-            }
             steps {
-                sh '''
+                sh """
+                docker run --rm -v ${WORKSPACE}:/app -w /app ${DOTNET_SDK_IMAGE} \
                 dotnet test ProductsAPI.Tests \
                   --logger "trx;LogFileName=test-results.trx" \
                   --collect:"XPlat Code Coverage"
-                '''
+                """
             }
             post {
                 always {
@@ -52,45 +37,38 @@ pipeline {
         }
 
         stage('Build .NET') {
-            agent {
-                docker { 
-                    image 'mcr.microsoft.com/dotnet/sdk:9.0' 
-                    reuseNode true 
-                }
-            }
             steps {
-                sh 'dotnet publish -c Release -o publish'
+                sh "docker run --rm -v ${WORKSPACE}:/app -w /app ${DOTNET_SDK_IMAGE} dotnet publish -c Release -o publish"
             }
         }
 
-        // --- FASES QUE PRECISAM DE DOCKER (Volta ao agent any/host) ---
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Se a tag falhar por ser null, usa 'latest' ou um timestamp
-                    def tag = env.BUILD_NUMBER ?: "latest"
-                    
+                    def tag = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
+                    def cleanTag = tag.replaceAll("[^a-zA-Z0-9._-]", "-")
+
                     sh """
-                    docker build -t ${DOCKER_IMAGE}:${tag} .
-                    docker tag ${DOCKER_IMAGE}:${tag} ${DOCKER_IMAGE}:latest
+                    docker build -t ${DOCKER_IMAGE}:${cleanTag} .
+                    docker tag ${DOCKER_IMAGE}:${cleanTag} ${DOCKER_IMAGE}:latest
                     """
                 }
             }
         }
 
-        stage('Deploy DEV') {
+        stage('Deploy (Qualquer Dev)') {
             when {
-                branch 'development' 
+                expression { env.BRANCH_NAME == 'development' || env.BRANCH_NAME.startsWith('dev_') }
             }
             steps {
-                sh 'chmod +x ./deploy/dev.sh' 
-                sh './deploy/dev.sh'
+                sh 'chmod +x ./deploy/prod.sh'
+                sh './deploy/prod.sh'
             }
         }
 
-        stage('Deploy PROD') {
+        stage('Deploy PROD (Main)') {
             when {
-                branch 'main' 
+                branch 'main'
             }
             steps {
                 sh 'chmod +x ./deploy/prod.sh'
