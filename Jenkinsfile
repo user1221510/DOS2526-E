@@ -23,14 +23,15 @@ pipeline {
         stage('Test + Coverage') {
             steps {
                 sh '''
+                dotnet add ProductsAPI.Tests package JunitXml.TestLogger
                 dotnet test ProductsAPI.Tests \
-                  --logger "trx;LogFileName=test-results.trx" \
+                  --logger "junit;LogFileName=test-results.xml" \
                   --collect:"XPlat Code Coverage"
                 '''
             }
             post {
                 always {
-                    junit '**/TestResults/*.trx'
+                    junit '**/test-results.xml'
                 }
             }
         }
