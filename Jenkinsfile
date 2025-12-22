@@ -31,7 +31,7 @@ pipeline {
             }
             post {
                 always {
-                    // Lê o resultado em formato XML
+                    // Lê o relatório em formato XML
                     junit '**/test-results.xml'
                 }
             }
@@ -39,7 +39,7 @@ pipeline {
 
         stage('Build .NET') {
             steps {
-                sh 'dotnet publish -c Release -o publish'
+                sh 'dotnet publish ProductsAPI.csproj -c Release -o publish'
             }
         }
 
