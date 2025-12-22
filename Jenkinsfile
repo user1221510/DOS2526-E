@@ -4,7 +4,7 @@ pipeline {
     environment {
         APP_NAME = "dos2526-api"
         DOCKER_IMAGE = "dos2526-api"
-        DOTNET_SDK_IMAGE = "mcr.microsoft.com/dotnet/sdk:9.0"
+        DOTNET_ENV = "Production"
     }
 
     stages {
@@ -16,18 +16,17 @@ pipeline {
 
         stage('Restore') {
             steps {
-                sh "docker run --rm -v ${WORKSPACE}:/app -w /app ${DOTNET_SDK_IMAGE} dotnet restore"
+                sh 'dotnet restore'
             }
         }
 
         stage('Test + Coverage') {
             steps {
-                sh """
-                docker run --rm -v ${WORKSPACE}:/app -w /app ${DOTNET_SDK_IMAGE} \
+                sh '''
                 dotnet test ProductsAPI.Tests \
                   --logger "trx;LogFileName=test-results.trx" \
                   --collect:"XPlat Code Coverage"
-                """
+                '''
             }
             post {
                 always {
@@ -38,7 +37,7 @@ pipeline {
 
         stage('Build .NET') {
             steps {
-                sh "docker run --rm -v ${WORKSPACE}:/app -w /app ${DOTNET_SDK_IMAGE} dotnet publish -c Release -o publish"
+                sh 'dotnet publish -c Release -o publish'
             }
         }
 
@@ -56,9 +55,10 @@ pipeline {
             }
         }
 
-        stage('Deploy (Qualquer Dev)') {
+        stage('Deploy (Dev Generico)') {
             when {
-                expression { env.BRANCH_NAME == 'development' || env.BRANCH_NAME.startsWith('dev_') }
+                // Corre em qualquer branch que comece por 'dev_'
+                expression { env.BRANCH_NAME.startsWith('dev_') || env.BRANCH_NAME == 'development' || env.BRANCH_NAME == 'quality' }
             }
             steps {
                 sh 'chmod +x ./deploy/prod.sh'
