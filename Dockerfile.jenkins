@@ -21,5 +21,11 @@ RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod
     apt-get update && \
     apt-get install -y dotnet-sdk-9.0
 
-# 3. Verificação das Instalações
+# 3. Instalar o SonarQube Scanner (Ferramenta Global .NET)
+RUN dotnet tool install --global dotnet-sonarscanner
+
+# 4. Adicionar as ferramentas .NET ao PATH para o sistema as encontrar
+ENV PATH="$PATH:/root/.dotnet/tools"
+
+# 5. Verificação das Instalações
 RUN dotnet --version && docker --version

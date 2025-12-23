@@ -1,15 +1,33 @@
 pipeline {
     agent any
-
     environment {
         DOCKER_IMAGE = "dos2526-api"
         DOTNET_ENV = "Production"
+        SONAR_PROJECT_KEY = "dos2526-api"
     }
 
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('SonarQube Start') {
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                    script {
+                        echo ">>> A iniciar análise SonarQube..."
+                        sh """
+                            dotnet sonarscanner begin \
+                                /k:"${SONAR_PROJECT_KEY}" \
+                                /d:sonar.host.url="http://infra-sonarqube:9000" \
+                                /d:sonar.token="${SONAR_TOKEN}" \
+                                /d:sonar.cs.opencover.reportsPaths="**/coverage.cobertura.xml" \
+                                /d:sonar.qualitygate.wait=true
+                        """
+                    }
+                }
             }
         }
 
@@ -41,34 +59,35 @@ pipeline {
             }
         }
 
+        stage('SonarQube End') {
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                    script {
+                        echo ">>> A enviar dados para o SonarQube..."
+                        sh 'dotnet sonarscanner end /d:sonar.token="${SONAR_TOKEN}"'
+                    }
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
                     def dataHora = new Date().format("yyyy-MM-dd'T'HHmm", TimeZone.getTimeZone('UTC'))
-                    
-                    def prefixo = ""
-                    if (env.BRANCH_NAME == 'quality') {
-                        prefixo = "quality"
-                    } else {
-                        prefixo = "dev"
-                    }
+                    def prefixo = (env.BRANCH_NAME == 'quality') ? "quality" : "dev"
                     
                     env.TAG_FINAL = "${prefixo}-${dataHora}"
-                    
                     echo ">>> Tag gerada: ${env.TAG_FINAL} <<<"
 
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
                     sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
-                    
                     sh "docker push ${DOCKER_IMAGE}:${env.TAG_FINAL} || echo 'Aviso: Upload Docker ignorado.'"
                 }
             }
         }
 
         stage('Deploy QUALITY') {
-            when {
-                branch 'quality'
-            }
+            when { branch 'quality' }
             steps {
                 sh 'chmod +x ./deploy/prod.sh'
                 sh "./deploy/prod.sh ${DOCKER_IMAGE}:${env.TAG_FINAL}"
@@ -103,12 +122,12 @@ pipeline {
                         git config user.name "JenkinsLog"
                         mkdir -p ${pasta}
                     """
-
+                    
                     writeFile file: caminhoFicheiro, text: logContent
 
                     sh """
                         git add ${caminhoFicheiro}
-                        git commit -m "JenkinsLog: Log Completo ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
+                        git commit -m "JenkinsLog: Log ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
                         git push https://${GIT_PASS}@github.com/user1221510/DOS2526-E.git HEAD:${env.BRANCH_NAME}
                     """
                 }
