@@ -10,9 +10,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
 
-  # 7. Jenkins 
+  # 7. Jenkins (AGORA COM BUILD AUTOMÁTICA)
   jenkins:
-    image: jenkins/jenkins:lts
+    build: 
+      context: .
+      dockerfile: Dockerfile.jenkins
     container_name: infra-jenkins
     restart: unless-stopped
     user: root  
