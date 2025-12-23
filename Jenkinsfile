@@ -60,7 +60,6 @@ pipeline {
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
                     sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
                     
-                    // Tenta upload (ignora erro se não houver login)
                     sh "docker push ${DOCKER_IMAGE}:${env.TAG_FINAL} || echo 'Aviso: Upload Docker ignorado.'"
                 }
             }
@@ -91,28 +90,25 @@ pipeline {
         success {
             echo "Pipeline executado com sucesso"
             script {
-                // Vai buscar o token seguro para fazer o push
                 withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                     
-                    def nomeFicheiro = "${env.TAG_FINAL}_log.txt"
+                    def pasta = "deploy_logs"
+                    def caminhoFicheiro = "${pasta}/${env.TAG_FINAL}_log.txt"
                     
-                    // --- ALTERAÇÃO AQUI: IDENTIDADE DO GIT ---
+                    def logs = currentBuild.rawBuild.getLog(10000)
+                    def logContent = logs.join("\n")
+                    
                     sh """
                         git config user.email "noreply@jenkins.log"
                         git config user.name "JenkinsLog"
+                        mkdir -p ${pasta}
                     """
 
-                    // Criar o ficheiro de log
-                    sh """
-                        echo "Build Jenkins com Sucesso." > ${nomeFicheiro}
-                        echo "Data: \$(date)" >> ${nomeFicheiro}
-                        echo "Imagem Criada: ${DOCKER_IMAGE}:${env.TAG_FINAL}" >> ${nomeFicheiro}
-                    """
+                    writeFile file: caminhoFicheiro, text: logContent
 
-                    // Enviar para o GitHub usando a variável segura ${GIT_PASS}
                     sh """
-                        git add ${nomeFicheiro}
-                        git commit -m "JenkinsLog: Registo do build ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
+                        git add ${caminhoFicheiro}
+                        git commit -m "JenkinsLog: Log Completo ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
                         git push https://${GIT_PASS}@github.com/user1221510/DOS2526-E.git HEAD:${env.BRANCH_NAME}
                     """
                 }
