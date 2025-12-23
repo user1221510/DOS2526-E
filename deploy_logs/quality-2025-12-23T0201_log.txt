@@ -1,0 +1,479 @@
+Started by user admin
+Connecting to https://api.github.com using user1221510/******
+Obtained Jenkinsfile from 9f921c884f8f9921cdcd0518fbdc66cd7ce7d7e6
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins in /var/jenkins_home/workspace/DOS_quality
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Declarative: Checkout SCM)
+[Pipeline] checkout
+The recommended git tool is: git
+using credential github-token
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/DOS_quality/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/user1221510/DOS2526-E.git # timeout=10
+Fetching without tags
+Fetching upstream changes from https://github.com/user1221510/DOS2526-E.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+using GIT_ASKPASS to set credentials 
+ > git fetch --no-tags --force --progress -- https://github.com/user1221510/DOS2526-E.git +refs/heads/quality:refs/remotes/origin/quality # timeout=10
+Checking out Revision 9f921c884f8f9921cdcd0518fbdc66cd7ce7d7e6 (quality)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 9f921c884f8f9921cdcd0518fbdc66cd7ce7d7e6 # timeout=10
+Commit message: "Fazer com que os logs vao para deploy_logs e que dê um log mais completo"
+ > git rev-list --no-walk 9f921c884f8f9921cdcd0518fbdc66cd7ce7d7e6 # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout)
+[Pipeline] checkout
+The recommended git tool is: git
+using credential github-token
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/DOS_quality/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/user1221510/DOS2526-E.git # timeout=10
+Fetching without tags
+Fetching upstream changes from https://github.com/user1221510/DOS2526-E.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+using GIT_ASKPASS to set credentials 
+ > git fetch --no-tags --force --progress -- https://github.com/user1221510/DOS2526-E.git +refs/heads/quality:refs/remotes/origin/quality # timeout=10
+Checking out Revision 9f921c884f8f9921cdcd0518fbdc66cd7ce7d7e6 (quality)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 9f921c884f8f9921cdcd0518fbdc66cd7ce7d7e6 # timeout=10
+Commit message: "Fazer com que os logs vao para deploy_logs e que dê um log mais completo"
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Restore)
+[Pipeline] sh
++ dotnet restore
+  Determining projects to restore...
+  Restored /var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/ProductsAPI.Tests.csproj (in 848 ms).
+  Restored /var/jenkins_home/workspace/DOS_quality/ProductsAPI.csproj (in 848 ms).
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Test + Coverage)
+[Pipeline] sh
++ dotnet add ProductsAPI.Tests package JunitXml.TestLogger
+  Determining projects to restore...
+  Writing /tmp/tmp8MMK5G.tmp
+info : X.509 certificate chain validation will use the fallback certificate bundle at '/usr/share/dotnet/sdk/9.0.308/trustedroots/codesignctl.pem'.
+info : X.509 certificate chain validation will use the fallback certificate bundle at '/usr/share/dotnet/sdk/9.0.308/trustedroots/timestampctl.pem'.
+info : Adding PackageReference for package 'JunitXml.TestLogger' into project '/var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/ProductsAPI.Tests.csproj'.
+info :   CACHE https://api.nuget.org/v3/registration5-gz-semver2/junitxml.testlogger/index.json
+info : Restoring packages for /var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/ProductsAPI.Tests.csproj...
+info :   CACHE https://api.nuget.org/v3/vulnerabilities/index.json
+info :   CACHE https://api.nuget.org/v3-vulnerabilities/2025.12.20.11.30.07/vulnerability.base.json
+info :   CACHE https://api.nuget.org/v3-vulnerabilities/2025.12.20.11.30.07/2025.12.22.17.30.14/vulnerability.update.json
+info : Package 'JunitXml.TestLogger' is compatible with all the specified frameworks in project '/var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/ProductsAPI.Tests.csproj'.
+info : PackageReference for package 'JunitXml.TestLogger' version '7.1.0' added to file '/var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/ProductsAPI.Tests.csproj'.
+info : Generating MSBuild file /var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/obj/ProductsAPI.Tests.csproj.nuget.g.props.
+info : Writing assets file to disk. Path: /var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/obj/project.assets.json
+log  : Restored /var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/ProductsAPI.Tests.csproj (in 389 ms).
++ dotnet test ProductsAPI.Tests --logger junit;LogFileName=test-results.xml --collect:XPlat Code Coverage
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+/var/jenkins_home/workspace/DOS_quality/Controllers/UserController.cs(93,23): warning CS8618: Non-nullable property 'Username' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_quality/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_quality/Controllers/UserController.cs(94,23): warning CS8618: Non-nullable property 'Email' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_quality/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_quality/Controllers/UserController.cs(95,23): warning CS8618: Non-nullable property 'FullName' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_quality/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_quality/Controllers/UserController.cs(96,23): warning CS8618: Non-nullable property 'Role' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_quality/ProductsAPI.csproj]
+  ProductsAPI -> /var/jenkins_home/workspace/DOS_quality/bin/Debug/net9.0/ProductsAPI.dll
+/var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/ProductsControllerTests.cs(123,13): warning CS8602: Dereference of a possibly null reference. [/var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/ProductsAPI.Tests.csproj]
+  ProductsAPI.Tests -> /var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/bin/Debug/net9.0/ProductsAPI.Tests.dll
+Test run for /var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/bin/Debug/net9.0/ProductsAPI.Tests.dll (.NETCoreApp,Version=v9.0)
+VSTest version 17.14.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+Results File: /var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/TestResults/test-results.xml
+
+Passed!  - Failed:     0, Passed:    13, Skipped:     0, Total:    13, Duration: 2 s - ProductsAPI.Tests.dll (net9.0)
+
+Attachments:
+  /var/jenkins_home/workspace/DOS_quality/ProductsAPI.Tests/TestResults/ffb3a636-6032-4489-8650-73c6bc7ccd12/coverage.cobertura.xml
+Post stage
+[Pipeline] junit
+Recording test results
+[Checks API] No suitable checks publisher found.
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Build .NET)
+[Pipeline] sh
++ dotnet publish ProductsAPI.csproj -c Release -o publish
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+/var/jenkins_home/workspace/DOS_quality/Controllers/UserController.cs(93,23): warning CS8618: Non-nullable property 'Username' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_quality/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_quality/Controllers/UserController.cs(94,23): warning CS8618: Non-nullable property 'Email' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_quality/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_quality/Controllers/UserController.cs(95,23): warning CS8618: Non-nullable property 'FullName' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_quality/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_quality/Controllers/UserController.cs(96,23): warning CS8618: Non-nullable property 'Role' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_quality/ProductsAPI.csproj]
+  ProductsAPI -> /var/jenkins_home/workspace/DOS_quality/bin/Release/net9.0/ProductsAPI.dll
+  ProductsAPI -> /var/jenkins_home/workspace/DOS_quality/publish/
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Build Docker Image)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+>>> Tag gerada: quality-2025-12-23T0201 <<<
+[Pipeline] sh
++ docker build -t dos2526-api:quality-2025-12-23T0201 .
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 30B 0.0s
+#1 transferring dockerfile: 230B 0.1s done
+#1 DONE 0.2s
+
+#2 [internal] load metadata for mcr.microsoft.com/dotnet/sdk:9.0
+#2 DONE 0.3s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B 0.0s done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 DONE 0.0s
+
+#5 [1/6] FROM mcr.microsoft.com/dotnet/sdk:9.0@sha256:6c7713b7d107f743015b863f6bb028fca7430192140536779c0464f1ece899bc
+#5 resolve mcr.microsoft.com/dotnet/sdk:9.0@sha256:6c7713b7d107f743015b863f6bb028fca7430192140536779c0464f1ece899bc
+#5 resolve mcr.microsoft.com/dotnet/sdk:9.0@sha256:6c7713b7d107f743015b863f6bb028fca7430192140536779c0464f1ece899bc 0.3s done
+#5 DONE 0.3s
+
+#4 [internal] load build context
+#4 transferring context: 3.05MB 2.4s done
+#4 DONE 2.5s
+
+#6 [2/6] WORKDIR /app
+#6 CACHED
+
+#7 [3/6] COPY ProductsAPI.csproj ./
+#7 CACHED
+
+#8 [4/6] RUN dotnet restore
+#8 CACHED
+
+#9 [5/6] COPY . .
+#9 DONE 6.6s
+
+#10 [6/6] RUN dotnet publish -c Release -o out
+#10 9.470   Determining projects to restore...
+#10 16.75   Restored /app/ProductsAPI.csproj (in 3.73 sec).
+#10 29.46   Restored /app/ProductsAPI.Tests/ProductsAPI.Tests.csproj (in 16.47 sec).
+#10 29.51 /usr/share/dotnet/sdk/9.0.308/Current/SolutionFile/ImportAfter/Microsoft.NET.Sdk.Solution.targets(36,5): warning NETSDK1194: The "--output" option isn't supported when building a solution. Specifying a solution-level output path results in all projects copying outputs to the same directory, which can lead to inconsistent builds. [/app/ProductsAPI.sln]
+#10 46.19 /app/Controllers/UserController.cs(93,23): warning CS8618: Non-nullable property 'Username' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/app/ProductsAPI.csproj]
+#10 46.19 /app/Controllers/UserController.cs(94,23): warning CS8618: Non-nullable property 'Email' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/app/ProductsAPI.csproj]
+#10 46.19 /app/Controllers/UserController.cs(95,23): warning CS8618: Non-nullable property 'FullName' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/app/ProductsAPI.csproj]
+#10 46.19 /app/Controllers/UserController.cs(96,23): warning CS8618: Non-nullable property 'Role' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/app/ProductsAPI.csproj]
+#10 47.22   ProductsAPI -> /app/bin/Release/net9.0/ProductsAPI.dll
+#10 49.56   ProductsAPI -> /app/out/
+#10 56.74 /app/ProductsAPI.Tests/ProductsControllerTests.cs(123,13): warning CS8602: Dereference of a possibly null reference. [/app/ProductsAPI.Tests/ProductsAPI.Tests.csproj]
+#10 58.25   ProductsAPI.Tests -> /app/ProductsAPI.Tests/bin/Release/net9.0/ProductsAPI.Tests.dll
+#10 59.81   ProductsAPI.Tests -> /app/out/
+#10 DONE 60.3s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 25.6s done
+#11 exporting manifest sha256:687bc9d365b0be67976d4cc416cb2f72ece7e57ffeadd1b2eaac2b5ffcd2c4b4 0.0s done
+#11 exporting config sha256:a082f379cd65e338df85d9c477cebe199ad23325447dc4410a993fd6e797cd2f 0.0s done
+#11 exporting attestation manifest sha256:8090b329527b597e2156c57e9afa1f4c501ec6340128f8144d091491c42f51b8
+#11 exporting attestation manifest sha256:8090b329527b597e2156c57e9afa1f4c501ec6340128f8144d091491c42f51b8 0.0s done
+#11 exporting manifest list sha256:4b92f4750eab9940e4e316ad028fc2570275753b3c6dcde5275b20cf470453c5 0.0s done
+#11 naming to docker.io/library/dos2526-api:quality-2025-12-23T0201 done
+#11 unpacking to docker.io/library/dos2526-api:quality-2025-12-23T0201
+#11 unpacking to docker.io/library/dos2526-api:quality-2025-12-23T0201 10.6s done
+#11 DONE 36.6s
+[Pipeline] sh
++ docker tag dos2526-api:quality-2025-12-23T0201 dos2526-api:latest
+[Pipeline] sh
++ docker push dos2526-api:quality-2025-12-23T0201
+The push refers to repository [docker.io/library/dos2526-api]
+ad15a54779b4: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+4a097761116a: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+4a097761116a: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+33e2b331fbc3: Waiting
+4a097761116a: Waiting
+33e2b331fbc3: Waiting
+4a097761116a: Waiting
+ca79fe95c9a2: Waiting
+1d808b05c2e0: Waiting
+245ec234df32: Waiting
+ae4ce04d0e1c: Waiting
+578fc9104231: Waiting
+1cc1ac41dea7: Waiting
+3e1108b4b55f: Waiting
+8a337e2dcaec: Waiting
+ba48f0a9aeab: Waiting
+2b091db4fe13: Waiting
+2ffd1c72ee0a: Waiting
+999179b737f1: Waiting
+ad15a54779b4: Waiting
+920e716f70d0: Waiting
+push access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed
++ echo Aviso: Upload Docker ignorado.
+Aviso: Upload Docker ignorado.
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy QUALITY)
+[Pipeline] sh
++ chmod +x ./deploy/prod.sh
+[Pipeline] sh
++ ./deploy/prod.sh dos2526-api:quality-2025-12-23T0201
+A iniciar Deploy de PRODUÇÃO...
+Imagem a utilizar: dos2526-api:quality-2025-12-23T0201
+A limpar container antigo...
+dos2526-api-prod
+dos2526-api-prod
+A arrancar novo container...
+c1fc0f8088d141e7a2593e0e153db8512de6b5b6f69ede33d9350ec33df8e2d2
+Deploy concluído com sucesso!
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy DEV)
+Stage "Deploy DEV" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] echo
+Pipeline executado com sucesso
+[Pipeline] script
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $GIT_PASS
+[Pipeline] {
