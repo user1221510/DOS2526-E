@@ -13,13 +13,11 @@ pipeline {
             }
         }
 
-        // --- DEFINIÇÃO INTELIGENTE DE NOMES E AMBIENTES ---
         stage('Setup Names') {
             steps {
                 script {
                     def branchClean = env.BRANCH_NAME.toLowerCase()
                     
-
                     if (branchClean == 'quality') {
                         env.ENV_NAME = 'prod'
                         env.SONAR_PROJECT_NAME = "DOS API [PROD]"
@@ -103,8 +101,10 @@ pipeline {
                 script {
                     echo ">>> Construindo Imagem: ${DOCKER_IMAGE}:${env.TAG_FINAL} <<<"
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
+                    
                     sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
-                    sh "docker push ${DOCKER_IMAGE}:${env.TAG_FINAL} || echo 'Aviso: Upload Docker ignorado.'"
+                    
+                    echo ">>> Imagem construída com sucesso (Local) <<<"
                 }
             }
         }
@@ -132,7 +132,7 @@ pipeline {
             steps {
                 script {
                     def containerName = "dos2526-api-${env.ENV_NAME}"
-                    def port = "8050" 
+                    def port = "8050"
                     
                     echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) em ${port}..."
                     
