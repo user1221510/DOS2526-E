@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "dos2526-api"
-
         DATA_HORA = sh(script: "date +%Y-%m-%d-%H%M", returnStdout: true).trim()
     }
 
@@ -14,25 +13,32 @@ pipeline {
             }
         }
 
+        stage('Setup Names') {
+            steps {
+                script {
+                    def branchClean = env.BRANCH_NAME.toLowerCase()
+                    env.TAG_FINAL = "${branchClean}-${env.DATA_HORA}"
+                    
+                    env.SONAR_PROJECT_KEY = "dos2526-api-${branchClean}"
+                    env.SONAR_PROJECT_NAME = "DOS API [${branchClean}]"
+                    
+                    echo ">>> CONFIGURAÇÃO <<<"
+                    echo "Branch: ${env.BRANCH_NAME}"
+                    echo "Tag Final: ${env.TAG_FINAL}"
+                    echo "Projeto Sonar: ${env.SONAR_PROJECT_NAME}"
+                }
+            }
+        }
+
         stage('SonarQube Start') {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     script {
-                        def branchName = env.BRANCH_NAME.replaceAll("/", "-") // Substitui barras por traços se houver
-                        def projectKey = "dos2526-api-${branchName}"
-                        def projectName = "DOS API [${branchName}]"
-                        
-                        def projectVersion = "${branchName}-${env.DATA_HORA}"
-                        
-                        env.TAG_FINAL = projectVersion
-
-                        echo ">>> SonarQube: Projeto=${projectName} | Versão=${projectVersion} <<<"
-
                         sh """
                             dotnet sonarscanner begin \
-                                /k:"${projectKey}" \
-                                /n:"${projectName}" \
-                                /v:"${projectVersion}" \
+                                /k:"${env.SONAR_PROJECT_KEY}" \
+                                /n:"${env.SONAR_PROJECT_NAME}" \
+                                /v:"${env.TAG_FINAL}" \
                                 /d:sonar.host.url="http://infra-sonarqube:9000" \
                                 /d:sonar.token="${SONAR_TOKEN}" \
                                 /d:sonar.cs.opencover.reportsPaths="**/coverage.cobertura.xml" \
@@ -75,7 +81,6 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     script {
-                        echo ">>> A finalizar análise SonarQube..."
                         sh 'dotnet sonarscanner end /d:sonar.token="${SONAR_TOKEN}"'
                     }
                 }
@@ -85,8 +90,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo ">>> Construindo Docker com Tag: ${env.TAG_FINAL} <<<"
-
+                    echo ">>> Construindo Imagem: ${DOCKER_IMAGE}:${env.TAG_FINAL} <<<"
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
                     sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
                     sh "docker push ${DOCKER_IMAGE}:${env.TAG_FINAL} || echo 'Aviso: Upload Docker ignorado.'"
@@ -104,7 +108,7 @@ pipeline {
 
         stage('Deploy DEV') {
             when {
-                expression { env.BRANCH_NAME.startsWith('dev_') || env.BRANCH_NAME == 'development' }
+                expression { env.BRANCH_NAME.toLowerCase().startsWith('dev_') }
             }
             steps {
                 sh 'chmod +x ./deploy/dev.sh'
@@ -122,7 +126,6 @@ pipeline {
                     def pasta = "deploy_logs"
                     def caminhoFicheiro = "${pasta}/${env.TAG_FINAL}_log.txt"
                     
-                    // Capturar log (até 10000 linhas)
                     def logs = currentBuild.rawBuild.getLog(10000)
                     def logContent = logs.join("\n")
                     
@@ -136,7 +139,7 @@ pipeline {
 
                     sh """
                         git add ${caminhoFicheiro}
-                        git commit -m "JenkinsLog: ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
+                        git commit -m "Log: ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
                         git push https://${GIT_PASS}@github.com/user1221510/DOS2526-E.git HEAD:${env.BRANCH_NAME}
                     """
                 }
