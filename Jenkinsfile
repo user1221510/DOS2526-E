@@ -166,7 +166,7 @@ pipeline {
 
                     sh """
                         git add ${caminhoFicheiro}
-                        git commit -m "Log: ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
+                        git commit -m "JenkinsLog: ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
                         git push https://${GIT_PASS}@github.com/user1221510/DOS2526-E.git HEAD:${env.BRANCH_NAME}
                     """
                 }
