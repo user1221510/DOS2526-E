@@ -13,13 +13,13 @@ pipeline {
             }
         }
 
+        // --- DEFINIÇÃO INTELIGENTE DE NOMES E AMBIENTES ---
         stage('Setup Names') {
             steps {
                 script {
                     def branchClean = env.BRANCH_NAME.toLowerCase()
                     
-                    // Se for 'quality', chamamos de 'prod'.
-                    // Se for 'dev_nome', continua 'dev_nome'.
+
                     if (branchClean == 'quality') {
                         env.ENV_NAME = 'prod'
                         env.SONAR_PROJECT_NAME = "DOS API [PROD]"
@@ -30,7 +30,6 @@ pipeline {
                         env.SONAR_PROJECT_KEY = "dos2526-api-${branchClean}"
                     }
                     
-                    // Define a Tag da Imagem: prod-data... ou dev_nome-data...
                     env.TAG_FINAL = "${env.ENV_NAME}-${env.DATA_HORA}"
                     
                     echo ">>> CONFIGURAÇÃO <<<"
@@ -53,7 +52,8 @@ pipeline {
                                 /d:sonar.host.url="http://infra-sonarqube:9000" \
                                 /d:sonar.token="${SONAR_TOKEN}" \
                                 /d:sonar.cs.opencover.reportsPaths="**/coverage.cobertura.xml" \
-                                /d:sonar.qualitygate.wait=true
+                                /d:sonar.qualitygate.wait=true \
+                                /d:sonar.exclusions="**/bin/**,**/obj/**,**/publish/**,**/TestResults/**"
                         """
                     }
                 }
@@ -114,7 +114,7 @@ pipeline {
             steps {
                 script {
                     def containerName = "dos2526-api-prod"
-                    def port = "8055" // Porta de Produção
+                    def port = "8055"
                     
                     echo ">>> A iniciar Deploy PROD em ${port}..."
                     
@@ -132,7 +132,7 @@ pipeline {
             steps {
                 script {
                     def containerName = "dos2526-api-${env.ENV_NAME}"
-                    def port = "8050"
+                    def port = "8050" 
                     
                     echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) em ${port}..."
                     
