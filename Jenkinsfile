@@ -17,15 +17,26 @@ pipeline {
             steps {
                 script {
                     def branchClean = env.BRANCH_NAME.toLowerCase()
-                    env.TAG_FINAL = "${branchClean}-${env.DATA_HORA}"
                     
-                    env.SONAR_PROJECT_KEY = "dos2526-api-${branchClean}"
-                    env.SONAR_PROJECT_NAME = "DOS API [${branchClean}]"
+                    // Se for 'quality', chamamos de 'prod'.
+                    // Se for 'dev_nome', continua 'dev_nome'.
+                    if (branchClean == 'quality') {
+                        env.ENV_NAME = 'prod'
+                        env.SONAR_PROJECT_NAME = "DOS API [PROD]"
+                        env.SONAR_PROJECT_KEY = "dos2526-api-prod"
+                    } else {
+                        env.ENV_NAME = branchClean
+                        env.SONAR_PROJECT_NAME = "DOS API [${branchClean}]"
+                        env.SONAR_PROJECT_KEY = "dos2526-api-${branchClean}"
+                    }
+                    
+                    // Define a Tag da Imagem: prod-data... ou dev_nome-data...
+                    env.TAG_FINAL = "${env.ENV_NAME}-${env.DATA_HORA}"
                     
                     echo ">>> CONFIGURAÇÃO <<<"
-                    echo "Branch: ${env.BRANCH_NAME}"
-                    echo "Tag Final: ${env.TAG_FINAL}"
-                    echo "Projeto Sonar: ${env.SONAR_PROJECT_NAME}"
+                    echo "Branch Real: ${env.BRANCH_NAME}"
+                    echo "Ambiente:    ${env.ENV_NAME}"
+                    echo "Tag Final:   ${env.TAG_FINAL}"
                 }
             }
         }
@@ -98,11 +109,19 @@ pipeline {
             }
         }
 
-        stage('Deploy QUALITY') {
+        stage('Deploy PROD') {
             when { branch 'quality' }
             steps {
-                sh 'chmod +x ./deploy/prod.sh'
-                sh "./deploy/prod.sh ${DOCKER_IMAGE}:${env.TAG_FINAL}"
+                script {
+                    def containerName = "dos2526-api-prod"
+                    def port = "8055" // Porta de Produção
+                    
+                    echo ">>> A iniciar Deploy PROD em ${port}..."
+                    
+                    sh "docker stop ${containerName} || true"
+                    sh "docker rm ${containerName} || true"
+                    sh "docker run -d --restart unless-stopped -p ${port}:8080 --name ${containerName} ${DOCKER_IMAGE}:${env.TAG_FINAL}"
+                }
             }
         }
 
@@ -111,8 +130,16 @@ pipeline {
                 expression { env.BRANCH_NAME.toLowerCase().startsWith('dev_') }
             }
             steps {
-                sh 'chmod +x ./deploy/dev.sh'
-                sh "./deploy/dev.sh ${DOCKER_IMAGE}:${env.TAG_FINAL}"
+                script {
+                    def containerName = "dos2526-api-${env.ENV_NAME}"
+                    def port = "8050"
+                    
+                    echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) em ${port}..."
+                    
+                    sh "docker stop ${containerName} || true"
+                    sh "docker rm ${containerName} || true"
+                    sh "docker run -d --restart unless-stopped -p ${port}:8080 --name ${containerName} ${DOCKER_IMAGE}:${env.TAG_FINAL}"
+                }
             }
         }
     }
