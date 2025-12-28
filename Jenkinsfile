@@ -114,13 +114,38 @@ pipeline {
             steps {
                 script {
                     def containerName = "dos2526-api-prod"
-                    def port = "8055"
+                    def basePort = 8055
+                    def maxAttempts = 5
+                    def deployed = false
                     
-                    echo ">>> A iniciar Deploy PROD em ${port}..."
+                    echo ">>> A iniciar Deploy PROD a partir da porta ${basePort}..."
                     
-                    sh "docker stop ${containerName} || true"
-                    sh "docker rm ${containerName} || true"
-                    sh "docker run -d --restart unless-stopped -p ${port}:8080 --name ${containerName} ${DOCKER_IMAGE}:${env.TAG_FINAL}"
+                    for (int i = 0; i < maxAttempts && !deployed; i++) {
+                        def currentPort = basePort + i
+                        
+                        sh "docker stop ${containerName} || true"
+                        sh "docker rm ${containerName} || true"
+                        
+                        // Tentar executar o container
+                        def result = sh(
+                            script: "docker run -d --restart unless-stopped -p ${currentPort}:8080 --name ${containerName} ${DOCKER_IMAGE}:${env.TAG_FINAL} 2>&1",
+                            returnStatus: true,
+                            returnStdout: true
+                        )
+                        
+                        if (result.status == 0) {
+                            echo ">>> Container implantado com sucesso na porta ${currentPort}"
+                            deployed = true
+                        } else if (result.output.contains("port is already allocated")) {
+                            echo ">>> Porta ${currentPort} indisponível, tentando próxima..."
+                        } else {
+                            error ">>> Erro ao implantar container: ${result.output}"
+                        }
+                    }
+                    
+                    if (!deployed) {
+                        error ">>> Não foi possível implantar o container em nenhuma porta (${basePort}-${basePort + maxAttempts - 1})."
+                    }
                 }
             }
         }
@@ -132,13 +157,42 @@ pipeline {
             steps {
                 script {
                     def containerName = "dos2526-api-${env.ENV_NAME}"
-                    def port = "8050"
+                    def basePort = 8050
+                    def maxAttempts = 10
+                    def deployed = false
                     
-                    echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) em ${port}..."
+                    // Parar o container do docker-compose se estiver a usar a porta
+                    sh "docker stop dos2526-e-web-1 || true"
+                    sh "docker rm dos2526-e-web-1 || true"
                     
-                    sh "docker stop ${containerName} || true"
-                    sh "docker rm ${containerName} || true"
-                    sh "docker run -d --restart unless-stopped -p ${port}:8080 --name ${containerName} ${DOCKER_IMAGE}:${env.TAG_FINAL}"
+                    echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) a partir da porta ${basePort}..."
+                    
+                    for (int i = 0; i < maxAttempts && !deployed; i++) {
+                        def currentPort = basePort + i
+                        
+                        sh "docker stop ${containerName} || true"
+                        sh "docker rm ${containerName} || true"
+                        
+                        // Tentar executar o container
+                        def result = sh(
+                            script: "docker run -d --restart unless-stopped -p ${currentPort}:8080 --name ${containerName} ${DOCKER_IMAGE}:${env.TAG_FINAL} 2>&1",
+                            returnStatus: true,
+                            returnStdout: true
+                        )
+                        
+                        if (result.status == 0) {
+                            echo ">>> Container implantado com sucesso na porta ${currentPort}"
+                            deployed = true
+                        } else if (result.output.contains("port is already allocated")) {
+                            echo ">>> Porta ${currentPort} indisponível, tentando próxima..."
+                        } else {
+                            error ">>> Erro ao implantar container: ${result.output}"
+                        }
+                    }
+                    
+                    if (!deployed) {
+                        error ">>> Não foi possível implantar o container em nenhuma porta (${basePort}-${basePort + maxAttempts - 1})."
+                    }
                 }
             }
         }
