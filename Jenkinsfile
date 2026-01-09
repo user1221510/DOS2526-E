@@ -4,6 +4,10 @@ pipeline {
     environment {
         DOCKER_IMAGE = "dos2526-api"
         DATA_HORA = sh(script: "date +%Y-%m-%d-%H%M", returnStdout: true).trim()
+        // Configurações da Base de Dados (Centralizadas)
+        DB_CONTAINER_NAME = "sql_server"
+        DB_PASSWORD = "GrupoE2526!"
+        DB_NETWORK = "dos_network"
     }
 
     stages {
@@ -38,12 +42,51 @@ pipeline {
             }
         }
 
+        // --- NOVO STAGE: GARANTIR QUE A BASE DE DADOS EXISTE ---
+        stage('Ensure Infrastructure') {
+            steps {
+                script {
+                    echo ">>> Verificando Infraestrutura (Rede e BD) <<<"
+                    
+                    // 1. Criar a rede se não existir
+                    sh "docker network create ${DB_NETWORK} || true"
+
+                    // 2. Verificar se o SQL Server já está a correr
+                    def dbExists = sh(script: "docker ps -q -f name=${DB_CONTAINER_NAME}", returnStdout: true).trim()
+                    
+                    if (!dbExists) {
+                        echo ">>> Base de dados não encontrada. A iniciar SQL Server... <<<"
+                        // Remove container antigo parado se existir
+                        sh "docker rm ${DB_CONTAINER_NAME} || true"
+                        
+                        // Inicia o SQL Server (Lógica igual ao Terraform)
+                        sh """
+                            docker run -d --restart unless-stopped \
+                            --name ${DB_CONTAINER_NAME} \
+                            --network ${DB_NETWORK} \
+                            -e "ACCEPT_EULA=Y" \
+                            -e "SA_PASSWORD=${DB_PASSWORD}" \
+                            -p 1433:1433 \
+                            -m 2048m \
+                            -v mssql_data:/var/opt/mssql \
+                            mcr.microsoft.com/mssql/server:latest
+                        """
+                        
+                        echo ">>> Aguardando a Base de Dados iniciar (15s)... <<<"
+                        sleep 15
+                    } else {
+                        echo ">>> Base de dados já está a correr. A saltar criação. <<<"
+                    }
+                }
+            }
+        }
+
         stage('SonarQube Start') {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     script {
                         sh """
-                            dotnet sonarscanner begin \
+                        dotnet sonarscanner begin \
                                 /k:"${env.SONAR_PROJECT_KEY}" \
                                 /n:"${env.SONAR_PROJECT_NAME}" \
                                 /v:"${env.TAG_FINAL}" \
@@ -99,12 +142,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo ">>> Construindo Imagem: ${DOCKER_IMAGE}:${env.TAG_FINAL} <<<"
+                    echo ">>> Construindo Imagem API <<<"
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
-                    
-                    sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
-                    
-                    echo ">>> Imagem construída com sucesso (Local) <<<"
                 }
             }
         }
@@ -115,12 +154,22 @@ pipeline {
                 script {
                     def containerName = "dos2526-api-prod"
                     def port = "8055"
-                    
-                    echo ">>> A iniciar Deploy PROD em ${port}..."
+                    // Connection string aponta para o nome do container da BD definido no stage 'Ensure Infrastructure'
+                    def dbConnection = "Server=${DB_CONTAINER_NAME};Database=master;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=true;"
+          
+                    echo ">>> Deploy PROD em ${port}..."
                     
                     sh "docker stop ${containerName} || true"
                     sh "docker rm ${containerName} || true"
-                    sh "docker run -d --restart unless-stopped -p ${port}:8080 --name ${containerName} ${DOCKER_IMAGE}:${env.TAG_FINAL}"
+                    
+                    sh """
+                        docker run -d --restart unless-stopped \
+                        -p ${port}:8080 \
+                        --name ${containerName} \
+                        --network ${DB_NETWORK} \
+                        -e "ConnectionStrings__DefaultConnection=${dbConnection}" \
+                        ${DOCKER_IMAGE}:${env.TAG_FINAL}
+                    """
                 }
             }
         }
@@ -133,12 +182,21 @@ pipeline {
                 script {
                     def containerName = "dos2526-api-${env.ENV_NAME}"
                     def port = "8050"
+                    def dbConnection = "Server=${DB_CONTAINER_NAME};Database=master;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=true;"
                     
-                    echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) em ${port}..."
+                    echo ">>> Deploy DEV (${env.ENV_NAME}) em ${port}..."
                     
                     sh "docker stop ${containerName} || true"
                     sh "docker rm ${containerName} || true"
-                    sh "docker run -d --restart unless-stopped -p ${port}:8080 --name ${containerName} ${DOCKER_IMAGE}:${env.TAG_FINAL}"
+
+                    sh """
+                        docker run -d --restart unless-stopped \
+                        -p ${port}:8080 \
+                        --name ${containerName} \
+                        --network ${DB_NETWORK} \
+                        -e "ConnectionStrings__DefaultConnection=${dbConnection}" \
+                        ${DOCKER_IMAGE}:${env.TAG_FINAL}
+                    """
                 }
             }
         }
