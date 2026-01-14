@@ -1,0 +1,25 @@
+
+app:
+  replicaCount: 1
+  image:
+    repository: your-dockerhub-username/dos2526-api # REPLACE THIS
+    tag: "latest"
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080 # .NET Default internal port
+  env:
+    environment: "Development"
+
+database:
+  enabled: true
+  image:
+    repository: mcr.microsoft.com/mssql/server
+    tag: "latest"
+  password: "GrupoE2526!" 
+  service:
+    port: 1433
+  persistence:
+    enabled: true
+    size: 2Gi

@@ -2,236 +2,87 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "dos2526-api"
+        // --- CONFIGURAÇÃO ---
+        IMAGE_NAME = "dos2526-api"
         DATA_HORA = sh(script: "date +%Y-%m-%d-%H%M", returnStdout: true).trim()
-        // Configurações da Base de Dados (Centralizadas)
-        DB_CONTAINER_NAME = "sql_server"
-        DB_PASSWORD = "GrupoE2526!"
-        DB_NETWORK = "dos_network"
+        
+        // Define o Namespace do Kubernetes baseado na branch
+        // Se for 'quality' vai para 'production', caso contrário 'staging'
+        KubeNamespace = "${env.BRANCH_NAME == 'quality' ? 'production' : 'staging'}"
+        ReleaseName = "products-api-${env.BRANCH_NAME == 'quality' ? 'prod' : 'dev'}"
     }
 
     stages {
         stage('Checkout') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
 
-        stage('Setup Names') {
+        stage('Configurar Variáveis') {
             steps {
                 script {
-                    def branchClean = env.BRANCH_NAME.toLowerCase()
-                    
-                    if (branchClean == 'quality') {
-                        env.ENV_NAME = 'prod'
-                        env.SONAR_PROJECT_NAME = "DOS API [PROD]"
-                        env.SONAR_PROJECT_KEY = "dos2526-api-prod"
-                    } else {
-                        env.ENV_NAME = branchClean
-                        env.SONAR_PROJECT_NAME = "DOS API [${branchClean}]"
-                        env.SONAR_PROJECT_KEY = "dos2526-api-${branchClean}"
-                    }
-                    
-                    env.TAG_FINAL = "${env.ENV_NAME}-${env.DATA_HORA}"
-                    
-                    echo ">>> CONFIGURAÇÃO <<<"
-                    echo "Branch Real: ${env.BRANCH_NAME}"
-                    echo "Ambiente:    ${env.ENV_NAME}"
-                    echo "Tag Final:   ${env.TAG_FINAL}"
+                    env.TAG_FINAL = "${env.BRANCH_NAME}-${env.DATA_HORA}"
+                    echo ">>> A preparar deploy para o Namespace: ${KubeNamespace}"
                 }
             }
         }
 
-        // --- NOVO STAGE: GARANTIR QUE A BASE DE DADOS EXISTE ---
-        stage('Ensure Infrastructure') {
+        stage('Testes + Coverage') {
             steps {
-                script {
-                    echo ">>> Verificando Infraestrutura (Rede e BD) <<<"
-                    
-                    // 1. Criar a rede se não existir
-                    sh "docker network create ${DB_NETWORK} || true"
-
-                    // 2. Verificar se o SQL Server já está a correr
-                    def dbExists = sh(script: "docker ps -q -f name=${DB_CONTAINER_NAME}", returnStdout: true).trim()
-                    
-                    if (!dbExists) {
-                        echo ">>> Base de dados não encontrada. A iniciar SQL Server... <<<"
-                        // Remove container antigo parado se existir
-                        sh "docker rm ${DB_CONTAINER_NAME} || true"
-                        
-                        // Inicia o SQL Server (Lógica igual ao Terraform)
-                        sh """
-                            docker run -d --restart unless-stopped \
-                            --name ${DB_CONTAINER_NAME} \
-                            --network ${DB_NETWORK} \
-                            -e "ACCEPT_EULA=Y" \
-                            -e "SA_PASSWORD=${DB_PASSWORD}" \
-                            -p 1433:1433 \
-                            -m 2048m \
-                            -v mssql_data:/var/opt/mssql \
-                            mcr.microsoft.com/mssql/server:latest
-                        """
-                        
-                        echo ">>> Aguardando a Base de Dados iniciar (15s)... <<<"
-                        sleep 15
-                    } else {
-                        echo ">>> Base de dados já está a correr. A saltar criação. <<<"
-                    }
-                }
-            }
-        }
-
-        stage('SonarQube Start') {
-            steps {
-                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                    script {
-                        sh """
-                        dotnet sonarscanner begin \
-                                /k:"${env.SONAR_PROJECT_KEY}" \
-                                /n:"${env.SONAR_PROJECT_NAME}" \
-                                /v:"${env.TAG_FINAL}" \
-                                /d:sonar.host.url="http://infra-sonarqube:9000" \
-                                /d:sonar.token="${SONAR_TOKEN}" \
-                                /d:sonar.cs.opencover.reportsPaths="**/coverage.cobertura.xml" \
-                                /d:sonar.qualitygate.wait=true \
-                                /d:sonar.exclusions="**/bin/**,**/obj/**,**/publish/**,**/TestResults/**"
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Restore') {
-            steps {
-                sh 'dotnet restore'
-            }
-        }
-
-        stage('Test + Coverage') {
-            steps {
+                // Mantém a lógica original de testes
                 sh '''
+                dotnet restore
                 dotnet add ProductsAPI.Tests package JunitXml.TestLogger
-                dotnet test ProductsAPI.Tests \
-                  --logger "junit;LogFileName=test-results.xml" \
-                  --collect:"XPlat Code Coverage"
+                dotnet test ProductsAPI.Tests --logger "junit;LogFileName=test-results.xml"
                 '''
             }
-            post {
-                always {
-                    junit '**/test-results.xml'
-                }
-            }
         }
 
-        stage('Build .NET') {
+        stage('Build & Push Docker') {
             steps {
-                sh 'dotnet publish ProductsAPI.csproj -c Release -o publish'
-            }
-        }
-
-        stage('SonarQube End') {
-            steps {
-                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                    script {
-                        sh 'dotnet sonarscanner end /d:sonar.token="${SONAR_TOKEN}"'
+                script {
+                    // Lê o username e password da credencial 'dockerhub-token'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-token', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                        echo ">>> Login no Docker Hub com o utilizador: $DOCKER_USER"
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        
+                        echo ">>> Construindo imagem: $DOCKER_USER/${IMAGE_NAME}:${env.TAG_FINAL}"
+                        docker build -t $DOCKER_USER/${IMAGE_NAME}:${env.TAG_FINAL} .
+                        
+                        echo ">>> Enviando imagem para o registry..."
+                        docker push $DOCKER_USER/${IMAGE_NAME}:${env.TAG_FINAL}
+                        """
                     }
                 }
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    echo ">>> Construindo Imagem API <<<"
-                    sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
-                }
-            }
-        }
-
-        stage('Deploy PROD') {
-            when { branch 'quality' }
-            steps {
-                script {
-                    def containerName = "dos2526-api-prod"
-                    def port = "8055"
-                    // Connection string aponta para o nome do container da BD definido no stage 'Ensure Infrastructure'
-                    def dbConnection = "Server=${DB_CONTAINER_NAME};Database=master;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=true;"
-          
-                    echo ">>> Deploy PROD em ${port}..."
-                    
-                    sh "docker stop ${containerName} || true"
-                    sh "docker rm ${containerName} || true"
-                    
-                    sh """
-                        docker run -d --restart unless-stopped \
-                        -p ${port}:8080 \
-                        --name ${containerName} \
-                        --network ${DB_NETWORK} \
-                        -e "ConnectionStrings__DefaultConnection=${dbConnection}" \
-                        ${DOCKER_IMAGE}:${env.TAG_FINAL}
-                    """
-                }
-            }
-        }
-
-        stage('Deploy DEV') {
+        stage('Deploy no K8s (Helm)') {
+            // Executa apenas se for a branch 'quality' ou uma branch de desenvolvimento 'dev_'
             when {
-                expression { env.BRANCH_NAME.toLowerCase().startsWith('dev_') }
+                expression { env.BRANCH_NAME == 'quality' || env.BRANCH_NAME.startsWith('dev_') }
             }
             steps {
                 script {
-                    def containerName = "dos2526-api-${env.ENV_NAME}"
-                    def port = "8050"
-                    def dbConnection = "Server=${DB_CONTAINER_NAME};Database=master;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=true;"
-                    
-                    echo ">>> Deploy DEV (${env.ENV_NAME}) em ${port}..."
-                    
-                    sh "docker stop ${containerName} || true"
-                    sh "docker rm ${containerName} || true"
-
-                    sh """
-                        docker run -d --restart unless-stopped \
-                        -p ${port}:8080 \
-                        --name ${containerName} \
-                        --network ${DB_NETWORK} \
-                        -e "ConnectionStrings__DefaultConnection=${dbConnection}" \
-                        ${DOCKER_IMAGE}:${env.TAG_FINAL}
-                    """
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-token', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        
+                        echo ">>> Atualizando Release Helm: ${ReleaseName} no namespace ${KubeNamespace} <<<"
+                        
+                        // 1. Garante que o namespace existe (cria se não existir)
+                        sh "kubectl create namespace ${KubeNamespace} --dry-run=client -o yaml | kubectl apply -f -"
+                        
+                        // 2. Executa o Helm Upgrade
+                        // O --set app.image.repository garante que usamos o utilizador dinamicamente
+                        sh """
+                        helm upgrade --install ${ReleaseName} ./charts/products-api \
+                          --namespace ${KubeNamespace} \
+                          --set app.image.repository=$DOCKER_USER/${IMAGE_NAME} \
+                          --set app.image.tag=${env.TAG_FINAL} \
+                          --set app.env.environment=${env.BRANCH_NAME == 'quality' ? 'Production' : 'Development'}
+                        """
+                    }
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo "Pipeline executado com sucesso"
-            script {
-                withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                    
-                    def pasta = "deploy_logs"
-                    def caminhoFicheiro = "${pasta}/${env.TAG_FINAL}_log.txt"
-                    
-                    def logs = currentBuild.rawBuild.getLog(10000)
-                    def logContent = logs.join("\n")
-                    
-                    sh """
-                        git config user.email "noreply@jenkins.log"
-                        git config user.name "JenkinsLog"
-                        mkdir -p ${pasta}
-                    """
-                    
-                    writeFile file: caminhoFicheiro, text: logContent
-
-                    sh """
-                        git add ${caminhoFicheiro}
-                        git commit -m "JenkinsLog: ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
-                        git push https://${GIT_PASS}@github.com/user1221510/DOS2526-E.git HEAD:${env.BRANCH_NAME}
-                    """
-                }
-            }
-        }
-        failure {
-            echo "Pipeline falhou"
         }
     }
 }

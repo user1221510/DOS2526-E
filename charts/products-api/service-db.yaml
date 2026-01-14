@@ -1,0 +1,15 @@
+{{- if .Values.database.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "products-api.fullname" . }}-db
+  labels:
+    {{- include "products-api.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: {{ .Values.database.service.port }}
+      targetPort: 1433
+  selector:
+    {{- include "products-api.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+{{- end }}
