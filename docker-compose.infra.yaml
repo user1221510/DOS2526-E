@@ -10,7 +10,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
 
-  # 7. Jenkins (AGORA COM BUILD AUTOMÁTICA)
+  # 7. Jenkins 
   jenkins:
     build: 
       context: .
@@ -23,7 +23,9 @@ services:
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock 
+      - /var/run/docker.sock:/var/run/docker.sock
+      # --- NOVA LINHA: Partilha a configuração do Kubernetes do Host ---
+      - ${USERPROFILE}/.kube:/root/.kube 
 
   # 8. SonarQube 
   sonarqube:
