@@ -29,4 +29,5 @@ spec:
             - name: ASPNETCORE_ENVIRONMENT
               value: {{ .Values.app.env.environment }}
             - name: ConnectionStrings__DefaultConnection
-              value: "Server={{ include "products-api.fullname" . }}-db;Database=master;User Id=sa;Password={{ .Values.database.password }};TrustServerCertificate=True;""
+              # CORREÇÃO: Removida a aspa extra no final
+              value: "Server={{ include "products-api.fullname" . }}-db;Database=master;User Id=sa;Password={{ .Values.database.password }};TrustServerCertificate=True;"
