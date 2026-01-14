@@ -63,29 +63,32 @@ pipeline {
                 expression { env.BRANCH_NAME == 'quality' || env.BRANCH_NAME.startsWith('dev_') }
             }
             steps {
-                script {
-                    // 1. Vai buscar o user/pass do DockerHub para configurar o Helm
+         script {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-token', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        
-                        // 2. Vai buscar o ficheiro de configuração do Kubernetes (ID: kubernet-token)
                         withCredentials([file(credentialsId: 'kubernet-token', variable: 'KUBECONFIG_FILE')]) {
                             
                             echo ">>> Configuração K8s carregada. A preparar ambiente..."
 
-                            // Script de correção de rede para Windows/Docker Desktop
                             sh """
-                            # Copia o ficheiro secreto para um temporário editável
+                            # 1. Copiar o ficheiro secreto para um temporário
                             cp \$KUBECONFIG_FILE k8s-config-temp
                             chmod 600 k8s-config-temp
                             
-                            # Substitui os endereços do Docker Desktop pelo endereço interno acessível pelo Jenkins
+                            # 2. Corrigir o endereço de rede (como já tinhas)
                             sed -i 's|kubernetes.docker.internal|host.docker.internal|g' k8s-config-temp
                             sed -i 's|127.0.0.1|host.docker.internal|g' k8s-config-temp
                             sed -i 's|localhost|host.docker.internal|g' k8s-config-temp
                             
-                            # Define este ficheiro corrigido como a configuração ativa para esta sessão
+                            # 3. Definir este ficheiro como a configuração ativa
                             export KUBECONFIG=\$(pwd)/k8s-config-temp
                             
+                            # --- A CORREÇÃO NOVA ESTÁ AQUI EM BAIXO ---
+                            # Removemos a autoridade de certificação antiga
+                            kubectl config unset clusters.docker-desktop.certificate-authority-data
+                            # Dizemos ao kubectl para não validar o certificado SSL (ignora o erro do nome)
+                            kubectl config set-cluster docker-desktop --insecure-skip-tls-verify=true
+                            # -------------------------------------------
+
                             echo ">>> A testar ligação ao Cluster..."
                             kubectl get nodes
                             
