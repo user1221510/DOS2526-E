@@ -18,7 +18,8 @@ pipeline {
         stage('Setup Names') {
             steps {
                 script {
-                    def branchClean = env.BRANCH_NAME.toLowerCase()
+                    // CORREÇÃO: .replace('_', '-') para garantir nomes válidos no Kubernetes
+                    def branchClean = env.BRANCH_NAME.toLowerCase().replace('_', '-')
                     
                     if (branchClean == 'quality') {
                         env.ENV_NAME = 'prod'
@@ -84,7 +85,6 @@ pipeline {
 
         stage('Build .NET') {
             steps {
-                // Compila para a pasta 'app_publish' para evitar conflitos recursivos
                 sh 'dotnet publish ProductsAPI.csproj -c Release -o app_publish'
             }
         }
@@ -117,12 +117,10 @@ pipeline {
                 script {
                     echo ">>> A iniciar Deploy PROD (Helm)..."
                     
-                    // --- CORREÇÃO AUTOMÁTICA DE CONECTIVIDADE ---
                     env.KUBECONFIG = "/var/jenkins_home/.kube/config"
                     sh "sed -i 's/127.0.0.1/host.docker.internal/g' ${env.KUBECONFIG} || true"
                     sh "sed -i 's/localhost/host.docker.internal/g' ${env.KUBECONFIG} || true"
                     sh "sed -i 's/certificate-authority-data:.*/insecure-skip-tls-verify: true/g' ${env.KUBECONFIG} || true"
-                    // ---------------------------------------------
 
                     sh "kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -"
                     
@@ -146,16 +144,10 @@ pipeline {
                 script {
                     echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) (Helm)..."
                     
-                    // --- CORREÇÃO AUTOMÁTICA DE CONECTIVIDADE ---
-                    // Define onde está o ficheiro config
                     env.KUBECONFIG = "/var/jenkins_home/.kube/config"
-                    
-                    // Executa os comandos SED automaticamente para corrigir o IP e o SSL
-                    // O '|| true' impede que o pipeline falhe se o texto já tiver sido substituído
                     sh "sed -i 's/127.0.0.1/host.docker.internal/g' ${env.KUBECONFIG} || true"
                     sh "sed -i 's/localhost/host.docker.internal/g' ${env.KUBECONFIG} || true"
                     sh "sed -i 's/certificate-authority-data:.*/insecure-skip-tls-verify: true/g' ${env.KUBECONFIG} || true"
-                    // ---------------------------------------------
 
                     def namespace = env.ENV_NAME
                     
