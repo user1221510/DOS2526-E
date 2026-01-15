@@ -1,0 +1,628 @@
+Started by user Francisco Sampaio da Silva
+Connecting to https://api.github.com using FranciscoSilva27/******
+Obtained Jenkinsfile from bfcfdfca9f5eac0465f6857a5304303a66c774c0
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins in /var/jenkins_home/workspace/DOS_dev_francisco
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Declarative: Checkout SCM)
+[Pipeline] checkout
+The recommended git tool is: NONE
+using credential github-token
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/DOS_dev_francisco/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/user1221510/DOS2526-E.git # timeout=10
+Fetching without tags
+Fetching upstream changes from https://github.com/user1221510/DOS2526-E.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+using GIT_ASKPASS to set credentials 
+ > git fetch --no-tags --force --progress -- https://github.com/user1221510/DOS2526-E.git +refs/heads/dev_francisco:refs/remotes/origin/dev_francisco # timeout=10
+Checking out Revision bfcfdfca9f5eac0465f6857a5304303a66c774c0 (dev_francisco)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f bfcfdfca9f5eac0465f6857a5304303a66c774c0 # timeout=10
+Commit message: "alterações feitas no jenkinsfile"
+ > git rev-list --no-walk 195069a0b26819825fc6b3eabaafdeb6666172d3 # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
++ date +%Y-%m-%d-%H%M
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout)
+[Pipeline] checkout
+The recommended git tool is: NONE
+using credential github-token
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/DOS_dev_francisco/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/user1221510/DOS2526-E.git # timeout=10
+Fetching without tags
+Fetching upstream changes from https://github.com/user1221510/DOS2526-E.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+using GIT_ASKPASS to set credentials 
+ > git fetch --no-tags --force --progress -- https://github.com/user1221510/DOS2526-E.git +refs/heads/dev_francisco:refs/remotes/origin/dev_francisco # timeout=10
+Checking out Revision bfcfdfca9f5eac0465f6857a5304303a66c774c0 (dev_francisco)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f bfcfdfca9f5eac0465f6857a5304303a66c774c0 # timeout=10
+Commit message: "alterações feitas no jenkinsfile"
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Setup Names)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+>>> CONFIGURAÇÃO <<<
+[Pipeline] echo
+Branch Real: dev_francisco
+[Pipeline] echo
+Ambiente:    dev_francisco
+[Pipeline] echo
+Tag Final:   dev_francisco-2026-01-15-2037
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (SonarQube Start)
+[Pipeline] withCredentials
+Masking supported pattern matches of $SONAR_TOKEN
+[Pipeline] {
+[Pipeline] script
+[Pipeline] {
+[Pipeline] sh
+Warning: A secret was passed to "sh" using Groovy String interpolation, which is insecure.
+		 Affected argument(s) used the following variable(s): [SONAR_TOKEN]
+		 See https://jenkins.io/redirect/groovy-string-interpolation for details.
++ dotnet sonarscanner begin /k:dos2526-api-dev_francisco /n:DOS API [dev_francisco] /v:dev_francisco-2026-01-15-2037 /d:sonar.host.url=http://infra-sonarqube:9000 /d:sonar.token=**** /d:sonar.cs.opencover.reportsPaths=**/coverage.cobertura.xml /d:sonar.qualitygate.wait=true /d:sonar.exclusions=**/bin/**,**/obj/**,**/publish/**,**/app_publish/**,**/TestResults/**
+SonarScanner for .NET 11.0
+Using the .NET Core version of the Scanner for .NET
+Pre-processing started.
+Preparing working directories...
+20:38:42.642  Updating build integration targets...
+20:38:48.775  Using SonarQube v25.12.0.117093.
+20:39:02.729  Fetching analysis configuration settings...
+20:39:56.428  Provisioning analyzer assemblies for cs...
+20:39:56.456  Installing required Roslyn analyzers...
+20:39:56.457  Processing plugin: csharp version 10.16.2.130377
+20:40:11.147  Provisioning analyzer assemblies for vbnet...
+20:40:11.167  Installing required Roslyn analyzers...
+20:40:11.181  Processing plugin: vbnet version 10.16.2.130377
+20:40:11.608  Incremental PR analysis: Base branch parameter was not provided.
+20:40:11.608  Cache data is empty. A full analysis will be performed.
+20:40:12.71  Pre-processing succeeded.
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Restore)
+[Pipeline] sh
++ dotnet restore
+  Determining projects to restore...
+  Restored /var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj (in 18.29 sec).
+  Restored /var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/ProductsAPI.Tests.csproj (in 18.26 sec).
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Test + Coverage)
+[Pipeline] sh
++ dotnet add ProductsAPI.Tests package JunitXml.TestLogger
+  Determining projects to restore...
+  Writing /tmp/tmp4696W5.tmp
+info : X.509 certificate chain validation will use the fallback certificate bundle at '/usr/share/dotnet/sdk/9.0.308/trustedroots/codesignctl.pem'.
+info : X.509 certificate chain validation will use the fallback certificate bundle at '/usr/share/dotnet/sdk/9.0.308/trustedroots/timestampctl.pem'.
+info : Adding PackageReference for package 'JunitXml.TestLogger' into project '/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/ProductsAPI.Tests.csproj'.
+info :   GET https://api.nuget.org/v3/registration5-gz-semver2/junitxml.testlogger/index.json
+info :   OK https://api.nuget.org/v3/registration5-gz-semver2/junitxml.testlogger/index.json 5075ms
+info : Restoring packages for /var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/ProductsAPI.Tests.csproj...
+info :   CACHE https://api.nuget.org/v3/vulnerabilities/index.json
+info :   CACHE https://api.nuget.org/v3-vulnerabilities/2026.01.15.05.28.15/vulnerability.base.json
+info :   CACHE https://api.nuget.org/v3-vulnerabilities/2026.01.15.05.28.15/2026.01.15.11.28.16/vulnerability.update.json
+info : Package 'JunitXml.TestLogger' is compatible with all the specified frameworks in project '/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/ProductsAPI.Tests.csproj'.
+info : PackageReference for package 'JunitXml.TestLogger' version '8.0.0' added to file '/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/ProductsAPI.Tests.csproj'.
+info : Generating MSBuild file /var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/obj/ProductsAPI.Tests.csproj.nuget.g.props.
+info : Writing assets file to disk. Path: /var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/obj/project.assets.json
+log  : Restored /var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/ProductsAPI.Tests.csproj (in 9.62 sec).
++ dotnet test ProductsAPI.Tests --logger junit;LogFileName=test-results.xml --collect:XPlat Code Coverage
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+/var/jenkins_home/workspace/DOS_dev_francisco/Controllers/UserController.cs(93,23): warning CS8618: Non-nullable property 'Username' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Controllers/UserController.cs(94,23): warning CS8618: Non-nullable property 'Email' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Controllers/UserController.cs(95,23): warning CS8618: Non-nullable property 'FullName' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Controllers/UserController.cs(96,23): warning CS8618: Non-nullable property 'Role' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Supplier.cs(8,20): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Product.cs(8,20): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Product.cs(10,24): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Sale.cs(8,20): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Sale.cs(10,24): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Sale.cs(14,20): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/User.cs(8,20): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Program.cs(61,1): warning S4507: Make sure this debug feature is deactivated before delivering the code in production. (https://rules.sonarsource.com/csharp/RSPEC-4507) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Program.cs(24,5): warning S2068: "password" detected here, make sure this is not a hard-coded credential. (https://rules.sonarsource.com/csharp/RSPEC-2068) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Program.cs(43,24): warning S6966: Await EnsureCreatedAsync instead. (https://rules.sonarsource.com/csharp/RSPEC-6966) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Program.cs(71,1): warning S6966: Await RunAsync instead. (https://rules.sonarsource.com/csharp/RSPEC-6966) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+CSC : warning S3904: Provide an 'AssemblyVersion' attribute for assembly 'ProductsAPI'. (https://rules.sonarsource.com/csharp/RSPEC-3904) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+  ProductsAPI -> /var/jenkins_home/workspace/DOS_dev_francisco/bin/Debug/net9.0/ProductsAPI.dll
+  Sonar: (ProductsAPI.csproj) Project processed successfully
+/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/ProductsControllerTests.cs(123,13): warning CS8602: Dereference of a possibly null reference. [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/ProductsAPI.Tests.csproj]
+  ProductsAPI.Tests -> /var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/bin/Debug/net9.0/ProductsAPI.Tests.dll
+  Sonar: (ProductsAPI.Tests.csproj) Project processed successfully
+Test run for /var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/bin/Debug/net9.0/ProductsAPI.Tests.dll (.NETCoreApp,Version=v9.0)
+VSTest version 17.14.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+Results File: /var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/TestResults/test-results.xml
+
+Passed!  - Failed:     0, Passed:    13, Skipped:     0, Total:    13, Duration: 17 s - ProductsAPI.Tests.dll (net9.0)
+
+Attachments:
+  /var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests/TestResults/c5fd0c56-398d-4ece-82ee-9511b63f545a/coverage.cobertura.xml
+Post stage
+[Pipeline] junit
+Recording test results
+[Checks API] No suitable checks publisher found.
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Build .NET)
+[Pipeline] sh
++ dotnet publish ProductsAPI.csproj -c Release -o app_publish
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+/var/jenkins_home/workspace/DOS_dev_francisco/Controllers/UserController.cs(93,23): warning CS8618: Non-nullable property 'Username' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Controllers/UserController.cs(94,23): warning CS8618: Non-nullable property 'Email' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Controllers/UserController.cs(95,23): warning CS8618: Non-nullable property 'FullName' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Controllers/UserController.cs(96,23): warning CS8618: Non-nullable property 'Role' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Product.cs(8,20): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Product.cs(10,24): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/User.cs(8,20): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Sale.cs(8,20): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Sale.cs(10,24): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Sale.cs(14,20): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Models/Supplier.cs(8,20): warning S6964: Value type property used as input in a controller action should be nullable, required or annotated with the JsonRequiredAttribute to avoid under-posting. (https://rules.sonarsource.com/csharp/RSPEC-6964) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Program.cs(61,1): warning S4507: Make sure this debug feature is deactivated before delivering the code in production. (https://rules.sonarsource.com/csharp/RSPEC-4507) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Program.cs(24,5): warning S2068: "password" detected here, make sure this is not a hard-coded credential. (https://rules.sonarsource.com/csharp/RSPEC-2068) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Program.cs(43,24): warning S6966: Await EnsureCreatedAsync instead. (https://rules.sonarsource.com/csharp/RSPEC-6966) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+/var/jenkins_home/workspace/DOS_dev_francisco/Program.cs(71,1): warning S6966: Await RunAsync instead. (https://rules.sonarsource.com/csharp/RSPEC-6966) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+CSC : warning S3904: Provide an 'AssemblyVersion' attribute for assembly 'ProductsAPI'. (https://rules.sonarsource.com/csharp/RSPEC-3904) [/var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.csproj]
+  ProductsAPI -> /var/jenkins_home/workspace/DOS_dev_francisco/bin/Release/net9.0/ProductsAPI.dll
+  Sonar: (ProductsAPI.csproj) Project processed successfully
+  ProductsAPI -> /var/jenkins_home/workspace/DOS_dev_francisco/app_publish/
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (SonarQube End)
+[Pipeline] withCredentials
+Masking supported pattern matches of $SONAR_TOKEN
+[Pipeline] {
+[Pipeline] script
+[Pipeline] {
+[Pipeline] sh
++ dotnet sonarscanner end /d:sonar.token=****
+SonarScanner for .NET 11.0
+Using the .NET Core version of the Scanner for .NET
+Post-processing started.
+20:48:54.984  Starting with Scanner for .NET v8 the way the `sonar.projectBaseDir` property is automatically detected has changed and this has an impact on the files that are analyzed and other properties that are resolved relative to it like `sonar.exclusions` and `sonar.test.exclusions`. If you would like to customize the behavior, please set the `sonar.projectBaseDir` property to point to a directory that contains all the source code you want to analyze. The path may be relative (to the directory from which the analysis was started) or absolute.
+20:48:58.025  Using Java found in Analysis Config: /root/.sonar/cache/aeab55d064a1a27a3744b0880b9b414077b4ed2b1790817eea3df60aec946431/OpenJDK21U-jre_x64_linux_hotspot_21.0.9_10.tar.gz_extracted/jdk-21.0.9+10-jre/bin/java
+20:49:08.069  INFO: Starting SonarScanner Engine...
+20:49:08.083  INFO: Java 21.0.9 Eclipse Adoptium (64-bit)
+20:49:25.485  INFO: Load global settings
+20:49:27.015  INFO: Load global settings (done) | time=1531ms
+20:49:27.031  INFO: Server id: 147B411E-AZtM-Uqjp4NX7l0SJnd9
+20:49:27.105  INFO: Loading required plugins
+20:49:27.105  INFO: Load plugins index
+20:49:27.314  INFO: Load plugins index (done) | time=214ms
+20:49:27.314  INFO: Load/download plugins
+20:49:27.548  INFO: Load/download plugins (done) | time=231ms
+20:49:31.341  INFO: Process project properties
+20:49:31.688  INFO: Process project properties (done) | time=363ms
+20:49:31.939  INFO: Project key: dos2526-api-dev_francisco
+20:49:31.939  INFO: Base dir: /var/jenkins_home/workspace/DOS_dev_francisco
+20:49:31.976  INFO: Working dir: /var/jenkins_home/workspace/DOS_dev_francisco/.sonarqube/out/.sonar
+20:49:32.206  INFO: Load project settings for component key: 'dos2526-api-dev_francisco'
+20:49:32.74  INFO: Load project settings for component key: 'dos2526-api-dev_francisco' (done) | time=536ms
+20:49:34.043  INFO: Load quality profiles
+20:49:35.388  INFO: Load quality profiles (done) | time=1329ms
+20:49:36.658  INFO: Load active rules
+20:49:47.834  INFO: Load active rules (done) | time=11110ms
+20:49:48.2  INFO: Load analysis cache
+20:49:49.207  INFO: Load analysis cache (668 bytes) | time=1003ms
+20:49:51.781  INFO: Preprocessing files...
+20:49:57.158  INFO: 6 languages detected in 109 preprocessed files (done) | time=5342ms
+20:49:57.158  INFO: 257 files ignored because of inclusion/exclusion patterns
+20:49:57.158  INFO: 0 files ignored because of scm ignore settings
+20:49:57.169  INFO: Loading plugins for detected languages
+20:49:57.189  INFO: Load/download plugins
+20:49:57.322  INFO: Load/download plugins (done) | time=139ms
+20:50:02.122  INFO: Executing phase 2 project builders
+20:50:02.881  INFO: Executing phase 2 project builders (done) | time=759ms
+20:50:03.382  INFO: Load project repositories
+20:50:05.587  INFO: Load project repositories (done) | time=2202ms
+20:50:06.116  INFO: Indexing files...
+20:50:06.123  INFO: Project configuration:
+20:50:06.125  INFO:   Excluded sources: **/bin/**, **/obj/**, **/publish/**, **/app_publish/**, **/TestResults/**, **/coverage.cobertura.xml
+20:50:06.183  INFO: Indexing files of module 'ProductsAPI'
+20:50:06.183  INFO:   Base dir: /var/jenkins_home/workspace/DOS_dev_francisco
+20:50:06.284  INFO:   Source paths: publish/ProductsAPI.runtimeconfig.json, publish/web.config, p...
+20:50:06.3  INFO:   Excluded sources: **/bin/**, **/obj/**, **/publish/**, **/app_publish/**, **/TestResults/**, **/coverage.cobertura.xml
+20:50:07.771  INFO: Indexing files of module 'ProductsAPI.Tests'
+20:50:07.771  INFO:   Base dir: /var/jenkins_home/workspace/DOS_dev_francisco/ProductsAPI.Tests
+20:50:07.771  INFO:   Test paths: ProductsControllerTests.cs, SalesControllerTests.cs, SupplierCo...
+20:50:07.771  INFO:   Excluded sources: **/bin/**, **/obj/**, **/publish/**, **/app_publish/**, **/TestResults/**, **/coverage.cobertura.xml
+20:50:08.136  INFO: Indexing files of module 'ProductsAPI'
+20:50:08.136  INFO:   Base dir: /var/jenkins_home/workspace/DOS_dev_francisco
+20:50:08.148  INFO:   Source paths: obj/Release/net9.0/ProductsAPI.GlobalUsings.g.cs, obj/Release...
+20:50:08.148  INFO:   Excluded sources: **/bin/**, **/obj/**, **/publish/**, **/app_publish/**, **/TestResults/**, **/coverage.cobertura.xml
+20:50:08.154  INFO: Indexing files of module 'DOS API [dev_francisco]'
+20:50:08.154  INFO:   Base dir: /var/jenkins_home/workspace/DOS_dev_francisco
+20:50:08.154  INFO:   Excluded sources: **/bin/**, **/obj/**, **/publish/**, **/app_publish/**, **/TestResults/**, **/coverage.cobertura.xml
+20:50:08.154  INFO: 109 files indexed (done) | time=2035ms
+20:50:08.177  INFO: Quality profile for cs: Sonar way
+20:50:08.177  INFO: Quality profile for docker: Sonar way
+20:50:08.177  INFO: Quality profile for json: Sonar way
+20:50:08.177  INFO: Quality profile for terraform: Sonar way
+20:50:08.178  INFO: Quality profile for xml: Sonar way
+20:50:08.186  INFO: Quality profile for yaml: Sonar way
+20:50:08.187  INFO: ------------- Run sensors on module ProductsAPI.Tests
+20:50:09.31  INFO: Load metrics repository
+20:50:09.883  INFO: Load metrics repository (done) | time=584ms
+20:50:17.745  INFO: Sensor IaC CloudFormation Sensor [iac]
+20:50:17.817  INFO: There are no files to be analyzed for the CloudFormation language
+20:50:17.817  INFO: Sensor IaC CloudFormation Sensor [iac] (done) | time=75ms
+20:50:17.817  INFO: Sensor IaC cfn-lint report Sensor [iac]
+20:50:17.833  INFO: Sensor IaC cfn-lint report Sensor [iac] (done) | time=18ms
+20:50:17.833  INFO: Sensor IaC hadolint report Sensor [iac]
+20:50:17.835  INFO: Sensor IaC hadolint report Sensor [iac] (done) | time=1ms
+20:50:17.835  INFO: Sensor IaC Azure Resource Manager Sensor [iac]
+20:50:17.859  INFO: There are no files to be analyzed for the Azure Resource Manager language
+20:50:17.859  INFO: Sensor IaC Azure Resource Manager Sensor [iac] (done) | time=23ms
+20:50:17.859  INFO: Sensor Java Config Sensor [iac]
+20:50:17.942  INFO: There are no files to be analyzed for the Java language
+20:50:17.942  INFO: Sensor Java Config Sensor [iac] (done) | time=78ms
+20:50:17.942  INFO: Sensor IaC Docker Sensor [iac]
+20:50:17.972  INFO: There are no files to be analyzed for the Docker language
+20:50:17.972  INFO: Sensor IaC Docker Sensor [iac] (done) | time=22ms
+20:50:17.972  INFO: Sensor C# Project Type Information [csharp]
+20:50:18.002  INFO: Sensor C# Project Type Information [csharp] (done) | time=38ms
+20:50:18.002  INFO: Sensor C# Analysis Log [csharp]
+20:50:18.12  INFO: Roslyn version: 4.14.0.0
+20:50:18.12  INFO: Language version: CSharp13
+20:50:18.12  INFO: Concurrent execution: enabled
+20:50:18.121  INFO: Sensor C# Analysis Log [csharp] (done) | time=120ms
+20:50:18.13  INFO: Sensor C# Method Declarations [csharp]
+20:50:18.194  INFO: Sensor C# Method Declarations [csharp] (done) | time=58ms
+20:50:18.194  INFO: Sensor C# Telemetry [csharp]
+20:50:18.234  INFO: Sensor C# Telemetry [csharp] (done) | time=41ms
+20:50:18.234  INFO: Sensor C# Telemetry Json [csharp]
+20:50:19.462  INFO: Sensor C# Telemetry Json [csharp] (done) | time=1212ms
+20:50:19.462  INFO: Sensor C# Properties [csharp]
+20:50:19.492  INFO: Sensor C# Properties [csharp] (done) | time=35ms
+20:50:19.492  INFO: Sensor CSS Rules [javascript]
+20:50:19.498  INFO: No CSS, PHP, HTML or VueJS files are found in the project. CSS analysis is skipped.
+20:50:19.498  INFO: Sensor CSS Rules [javascript] (done) | time=4ms
+20:50:19.573  INFO: ------------- Run sensors on module ProductsAPI
+20:50:20.23  INFO: Sensor IaC hadolint report Sensor [iac]
+20:50:20.23  INFO: Sensor IaC hadolint report Sensor [iac] (done) | time=1ms
+20:50:20.23  INFO: Sensor Java Config Sensor [iac]
+20:50:20.232  INFO: There are no files to be analyzed for the Java language
+20:50:20.232  INFO: Sensor Java Config Sensor [iac] (done) | time=1ms
+20:50:20.232  INFO: Sensor IaC Docker Sensor [iac]
+20:50:20.232  INFO: There are no files to be analyzed for the Docker language
+20:50:20.232  INFO: Sensor IaC Docker Sensor [iac] (done) | time=0ms
+20:50:20.232  INFO: Sensor C# Project Type Information [csharp]
+20:50:20.235  INFO: Sensor C# Project Type Information [csharp] (done) | time=1ms
+20:50:20.235  INFO: Sensor C# Analysis Log [csharp]
+20:50:20.235  INFO: Roslyn version: 4.14.0.0
+20:50:20.235  INFO: Language version: CSharp13
+20:50:20.235  INFO: Concurrent execution: enabled
+20:50:20.235  INFO: Sensor C# Analysis Log [csharp] (done) | time=2ms
+20:50:20.235  INFO: Sensor C# Method Declarations [csharp]
+20:50:20.245  INFO: Sensor C# Method Declarations [csharp] (done) | time=2ms
+20:50:20.245  INFO: Sensor C# Properties [csharp]
+20:50:20.245  INFO: Sensor C# Properties [csharp] (done) | time=4ms
+20:50:20.245  INFO: Sensor CSS Rules [javascript]
+20:50:20.245  INFO: No CSS, PHP, HTML or VueJS files are found in the project. CSS analysis is skipped.
+20:50:20.252  INFO: Sensor CSS Rules [javascript] (done) | time=1ms
+20:50:20.253  INFO: ------------- Run sensors on module ProductsAPI
+20:50:20.751  INFO: Sensor IaC Terraform Sensor [iac]
+20:50:21.992  INFO: 1 source file to be analyzed
+20:50:23.403  INFO: 1/1 source file has been analyzed
+20:50:23.408  INFO: Sensor IaC Terraform Sensor [iac] (done) | time=2656ms
+20:50:23.418  INFO: Sensor IaC TFLint report Sensor [iac]
+20:50:23.434  INFO: Sensor IaC TFLint report Sensor [iac] (done) | time=24ms
+20:50:23.434  INFO: Sensor IaC CloudFormation Sensor [iac]
+20:50:23.496  INFO: There are no files to be analyzed for the CloudFormation language
+20:50:23.496  INFO: Sensor IaC CloudFormation Sensor [iac] (done) | time=64ms
+20:50:23.5  INFO: Sensor IaC cfn-lint report Sensor [iac]
+20:50:23.5  INFO: Sensor IaC cfn-lint report Sensor [iac] (done) | time=0ms
+20:50:23.501  INFO: Sensor IaC Kubernetes Sensor [iac]
+20:50:24.975  INFO: There are no files to be analyzed for the Kubernetes language
+20:50:24.975  INFO: Sensor IaC Kubernetes Sensor [iac] (done) | time=1479ms
+20:50:24.976  INFO: Sensor IaC hadolint report Sensor [iac]
+20:50:24.976  INFO: Sensor IaC hadolint report Sensor [iac] (done) | time=0ms
+20:50:24.977  INFO: Sensor IaC Azure Resource Manager Sensor [iac]
+20:50:25.004  INFO: There are no files to be analyzed for the Azure Resource Manager language
+20:50:25.008  INFO: Sensor IaC Azure Resource Manager Sensor [iac] (done) | time=27ms
+20:50:25.008  INFO: Sensor Java Config Sensor [iac]
+20:50:25.027  INFO: There are no files to be analyzed for the Java language
+20:50:25.027  INFO: Sensor Java Config Sensor [iac] (done) | time=7ms
+20:50:25.027  INFO: Sensor IaC Docker Sensor [iac]
+20:50:25.759  INFO: 2 source files to be analyzed
+20:50:27.387  INFO: 2/2 source files have been analyzed
+20:50:27.387  INFO: Sensor IaC Docker Sensor [iac] (done) | time=2354ms
+20:50:27.387  INFO: Sensor C# Project Type Information [csharp]
+20:50:27.4  INFO: Sensor C# Project Type Information [csharp] (done) | time=15ms
+20:50:27.4  INFO: Sensor C# Analysis Log [csharp]
+20:50:27.404  INFO: Roslyn version: 4.14.0.0
+20:50:27.404  INFO: Language version: CSharp13
+20:50:27.404  INFO: Concurrent execution: enabled
+20:50:27.404  INFO: Sensor C# Analysis Log [csharp] (done) | time=8ms
+20:50:27.405  INFO: Sensor C# Method Declarations [csharp]
+20:50:27.435  INFO: Sensor C# Method Declarations [csharp] (done) | time=8ms
+20:50:27.435  INFO: Sensor C# Telemetry [csharp]
+20:50:27.435  INFO: Sensor C# Telemetry [csharp] (done) | time=22ms
+20:50:27.435  INFO: Sensor C# Telemetry Json [csharp]
+20:50:27.456  INFO: Sensor C# Telemetry Json [csharp] (done) | time=10ms
+20:50:27.456  INFO: Sensor C# Properties [csharp]
+20:50:27.456  INFO: Sensor C# Properties [csharp] (done) | time=2ms
+20:50:27.456  INFO: Sensor JavaScript inside YAML analysis [javascript]
+20:50:27.572  INFO: No input files found for analysis
+20:50:27.59  INFO: Hit the cache for 0 out of 0
+20:50:27.59  INFO: Miss the cache for 0 out of 0
+20:50:27.59  INFO: Sensor JavaScript inside YAML analysis [javascript] (done) | time=140ms
+20:50:27.59  INFO: Sensor CSS Rules [javascript]
+20:50:27.649  INFO: No CSS, PHP, HTML or VueJS files are found in the project. CSS analysis is skipped.
+20:50:27.649  INFO: Sensor CSS Rules [javascript] (done) | time=17ms
+20:50:27.649  INFO: ------------- Run sensors on module DOS API [dev_francisco]
+20:50:29.143  INFO: Sensor IaC hadolint report Sensor [iac]
+20:50:29.143  INFO: Sensor IaC hadolint report Sensor [iac] (done) | time=1ms
+20:50:29.143  INFO: Sensor Java Config Sensor [iac]
+20:50:29.144  INFO: There are no files to be analyzed for the Java language
+20:50:29.173  INFO: Sensor Java Config Sensor [iac] (done) | time=14ms
+20:50:29.173  INFO: Sensor IaC Docker Sensor [iac]
+20:50:29.189  INFO: There are no files to be analyzed for the Docker language
+20:50:29.189  INFO: Sensor IaC Docker Sensor [iac] (done) | time=1ms
+20:50:29.189  INFO: Sensor C# Project Type Information [csharp]
+20:50:29.189  INFO: Sensor C# Project Type Information [csharp] (done) | time=1ms
+20:50:29.189  INFO: Sensor C# Analysis Log [csharp]
+20:50:29.189  INFO: Sensor C# Analysis Log [csharp] (done) | time=1ms
+20:50:29.189  INFO: Sensor C# Method Declarations [csharp]
+20:50:29.19  INFO: Sensor C# Method Declarations [csharp] (done) | time=21ms
+20:50:29.19  INFO: Sensor C# Properties [csharp]
+20:50:29.19  INFO: Sensor C# Properties [csharp] (done) | time=1ms
+20:50:29.19  INFO: Sensor CSS Rules [javascript]
+20:50:29.204  INFO: No CSS, PHP, HTML or VueJS files are found in the project. CSS analysis is skipped.
+20:50:29.204  INFO: Sensor CSS Rules [javascript] (done) | time=0ms
+20:50:29.205  INFO: Sensor TextAndSecretsSensor [text]
+20:50:29.479  INFO: Available processors: 4
+20:50:29.495  INFO: Using 4 threads for analysis.
+20:50:38.794  INFO: The property "sonar.tests" is not set. To improve the analysis accuracy, we categorize a file as a test file if any of the following is true:
+  * The filename starts with "test"
+  * The filename contains "test." or "tests."
+  * Any directory in the file path is named: "doc", "docs", "test" or "tests"
+  * Any directory in the file path has a name ending in "test" or "tests"
+
+20:50:39.415  INFO: Start fetching files for the text and secrets analysis
+20:50:39.57  INFO: Using Git CLI to retrieve untracked files
+20:50:40.123  INFO: Retrieving language associated files and files included via "sonar.text.inclusions" that are tracked by git
+20:50:40.145  INFO: Starting the text and secrets analysis
+20:50:40.176  INFO: 96 source files to be analyzed for the text and secrets analysis
+20:50:43.656  INFO: 96/96 source files have been analyzed for the text and secrets analysis
+20:50:43.708  INFO: Sensor TextAndSecretsSensor [text] (done) | time=14570ms
+20:50:43.722  INFO: ------------- Run sensors on project
+20:50:46.093  INFO: Sensor C# Telemetry processor [csharp]
+20:50:46.129  INFO: Sensor C# Telemetry processor [csharp] (done) | time=32ms
+20:50:46.129  INFO: Sensor C# Telemetry Json processor [csharp]
+20:50:46.358  INFO: Sensor C# Telemetry Json processor [csharp] (done) | time=142ms
+20:50:46.358  INFO: Sensor C# [csharp]
+20:50:46.421  INFO: Importing results from 8 proto files in '/var/jenkins_home/workspace/DOS_dev_francisco/.sonarqube/out/1/output-cs'
+20:50:47.989  INFO: Importing results from 8 proto files in '/var/jenkins_home/workspace/DOS_dev_francisco/.sonarqube/out/2/output-cs'
+20:50:48.82  INFO: Importing results from 8 proto files in '/var/jenkins_home/workspace/DOS_dev_francisco/.sonarqube/out/0/output-cs'
+20:50:49.708  INFO: Importing 3 Roslyn reports
+20:50:50.457  INFO: Found 3 MSBuild C# projects: 1 MAIN project. 1 TEST project. 1 with no MAIN nor TEST files.
+20:50:50.457  INFO: Sensor C# [csharp] (done) | time=4187ms
+20:50:50.457  INFO: Sensor Analysis Warnings import [csharp]
+20:50:50.531  INFO: Sensor Analysis Warnings import [csharp] (done) | time=40ms
+20:50:50.533  INFO: Sensor C# File Caching Sensor [csharp]
+20:50:50.624  INFO: Sensor C# File Caching Sensor [csharp] (done) | time=110ms
+20:50:50.624  INFO: Sensor C# Tests Coverage Report Import [csharp]
+20:50:50.859  INFO: Parsing the OpenCover report /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/a0a9689e-10b7-4ac5-ac07-0f27481d44d2/coverage.cobertura.xml
+20:50:51.533  WARNING: WARN: Could not import coverage report './ProductsAPI.Tests/TestResults/a0a9689e-10b7-4ac5-ac07-0f27481d44d2/coverage.cobertura.xml' because 'Missing root element <CoverageSession> in /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/a0a9689e-10b7-4ac5-ac07-0f27481d44d2/coverage.cobertura.xml at line 2'. Troubleshooting guide: https://community.sonarsource.com/t/37151
+20:50:51.534  INFO: Parsing the OpenCover report /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/8ebe18d7-adc4-4899-8d60-158dda5fae55/coverage.cobertura.xml
+20:50:51.534  WARNING: WARN: Could not import coverage report './ProductsAPI.Tests/TestResults/8ebe18d7-adc4-4899-8d60-158dda5fae55/coverage.cobertura.xml' because 'Missing root element <CoverageSession> in /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/8ebe18d7-adc4-4899-8d60-158dda5fae55/coverage.cobertura.xml at line 2'. Troubleshooting guide: https://community.sonarsource.com/t/37151
+20:50:51.534  INFO: Parsing the OpenCover report /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/f6def99c-d835-41be-8ace-4ecfd8a9973c/coverage.cobertura.xml
+20:50:51.534  WARNING: WARN: Could not import coverage report './ProductsAPI.Tests/TestResults/f6def99c-d835-41be-8ace-4ecfd8a9973c/coverage.cobertura.xml' because 'Missing root element <CoverageSession> in /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/f6def99c-d835-41be-8ace-4ecfd8a9973c/coverage.cobertura.xml at line 2'. Troubleshooting guide: https://community.sonarsource.com/t/37151
+20:50:51.534  INFO: Parsing the OpenCover report /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/1e558daa-d7f9-435a-80bc-025e519f6d6f/coverage.cobertura.xml
+20:50:51.534  WARNING: WARN: Could not import coverage report './ProductsAPI.Tests/TestResults/1e558daa-d7f9-435a-80bc-025e519f6d6f/coverage.cobertura.xml' because 'Missing root element <CoverageSession> in /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/1e558daa-d7f9-435a-80bc-025e519f6d6f/coverage.cobertura.xml at line 2'. Troubleshooting guide: https://community.sonarsource.com/t/37151
+20:50:51.534  INFO: Parsing the OpenCover report /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/48bec64f-bcd5-4016-a7cf-7da10ab4c7dd/coverage.cobertura.xml
+20:50:51.534  WARNING: WARN: Could not import coverage report './ProductsAPI.Tests/TestResults/48bec64f-bcd5-4016-a7cf-7da10ab4c7dd/coverage.cobertura.xml' because 'Missing root element <CoverageSession> in /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/48bec64f-bcd5-4016-a7cf-7da10ab4c7dd/coverage.cobertura.xml at line 2'. Troubleshooting guide: https://community.sonarsource.com/t/37151
+20:50:51.535  INFO: Parsing the OpenCover report /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/68bb5ad5-60ae-4228-8c23-f80cbb989065/coverage.cobertura.xml
+20:50:51.535  WARNING: WARN: Could not import coverage report './ProductsAPI.Tests/TestResults/68bb5ad5-60ae-4228-8c23-f80cbb989065/coverage.cobertura.xml' because 'Missing root element <CoverageSession> in /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/68bb5ad5-60ae-4228-8c23-f80cbb989065/coverage.cobertura.xml at line 2'. Troubleshooting guide: https://community.sonarsource.com/t/37151
+20:50:51.535  INFO: Parsing the OpenCover report /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/72b08228-2181-469c-bbba-a51bd2e093ec/coverage.cobertura.xml
+20:50:51.535  WARNING: WARN: Could not import coverage report './ProductsAPI.Tests/TestResults/72b08228-2181-469c-bbba-a51bd2e093ec/coverage.cobertura.xml' because 'Missing root element <CoverageSession> in /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/72b08228-2181-469c-bbba-a51bd2e093ec/coverage.cobertura.xml at line 2'. Troubleshooting guide: https://community.sonarsource.com/t/37151
+20:50:51.535  INFO: Parsing the OpenCover report /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/5559a506-36a8-4e8a-b52b-f12cbb2f22ec/coverage.cobertura.xml
+20:50:51.542  WARNING: WARN: Could not import coverage report './ProductsAPI.Tests/TestResults/5559a506-36a8-4e8a-b52b-f12cbb2f22ec/coverage.cobertura.xml' because 'Missing root element <CoverageSession> in /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/5559a506-36a8-4e8a-b52b-f12cbb2f22ec/coverage.cobertura.xml at line 2'. Troubleshooting guide: https://community.sonarsource.com/t/37151
+20:50:51.555  INFO: Parsing the OpenCover report /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/c5fd0c56-398d-4ece-82ee-9511b63f545a/coverage.cobertura.xml
+20:50:51.561  WARNING: WARN: Could not import coverage report './ProductsAPI.Tests/TestResults/c5fd0c56-398d-4ece-82ee-9511b63f545a/coverage.cobertura.xml' because 'Missing root element <CoverageSession> in /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/c5fd0c56-398d-4ece-82ee-9511b63f545a/coverage.cobertura.xml at line 2'. Troubleshooting guide: https://community.sonarsource.com/t/37151
+20:50:51.582  INFO: Parsing the OpenCover report /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/f888cca9-edc3-4c30-83fb-fe247cfd49ea/coverage.cobertura.xml
+20:50:51.583  WARNING: WARN: Could not import coverage report './ProductsAPI.Tests/TestResults/f888cca9-edc3-4c30-83fb-fe247cfd49ea/coverage.cobertura.xml' because 'Missing root element <CoverageSession> in /var/jenkins_home/workspace/DOS_dev_francisco/./ProductsAPI.Tests/TestResults/f888cca9-edc3-4c30-83fb-fe247cfd49ea/coverage.cobertura.xml at line 2'. Troubleshooting guide: https://community.sonarsource.com/t/37151
+20:50:51.583  INFO: Sensor C# Tests Coverage Report Import [csharp] (done) | time=970ms
+20:50:51.583  INFO: Sensor Zero Coverage Sensor
+20:50:51.796  INFO: Sensor Zero Coverage Sensor (done) | time=217ms
+20:50:51.796  INFO: ------------- Gather SCA dependencies on project
+20:50:51.936  INFO: Dependency analysis skipped
+20:50:52.054  INFO: SCM Publisher SCM provider for this project is: git
+20:50:52.055  INFO: SCM Publisher 19 source files to be analyzed
+20:50:52.721  INFO: SCM Publisher 0/19 source files have been analyzed (done) | time=665ms
+20:50:52.722  WARNING: WARN: Missing blame information for the following files:
+20:50:52.728  WARNING: WARN:   * ProductsAPI.Tests/TestResults/5559a506-36a8-4e8a-b52b-f12cbb2f22ec/coverage.cobertura.xml
+20:50:52.728  WARNING: WARN:   * ProductsAPI.Tests/bin/Debug/net9.0/publish/publish/publish/publish/web.config
+20:50:52.728  WARNING: WARN:   * ProductsAPI.Tests/TestResults/72b08228-2181-469c-bbba-a51bd2e093ec/coverage.cobertura.xml
+20:50:52.733  WARNING: WARN:   * ProductsAPI.Tests/bin/Debug/net9.0/publish/publish/web.config
+20:50:52.733  WARNING: WARN:   * ProductsAPI.Tests/TestResults/1e558daa-d7f9-435a-80bc-025e519f6d6f/coverage.cobertura.xml
+20:50:52.733  WARNING: WARN:   * ProductsAPI.Tests/bin/Debug/net9.0/publish/publish/publish/publish/publish/web.config
+20:50:52.733  WARNING: WARN:   * ProductsAPI.Tests/TestResults/a0a9689e-10b7-4ac5-ac07-0f27481d44d2/coverage.cobertura.xml
+20:50:52.733  WARNING: WARN:   * ProductsAPI.Tests/bin/Debug/net9.0/publish/publish/publish/publish/publish/publish/web.config
+20:50:52.733  WARNING: WARN:   * ProductsAPI.Tests/TestResults/f888cca9-edc3-4c30-83fb-fe247cfd49ea/coverage.cobertura.xml
+20:50:52.733  WARNING: WARN:   * ProductsAPI.Tests/bin/Debug/net9.0/publish/publish/publish/publish/publish/publish/publish/publish/web.config
+20:50:52.735  WARNING: WARN:   * ProductsAPI.Tests/bin/Debug/net9.0/publish/publish/publish/publish/publish/publish/publish/web.config
+20:50:52.735  WARNING: WARN:   * ProductsAPI.Tests/bin/Debug/net9.0/publish/publish/publish/publish/publish/publish/publish/publish/publish/web.config
+20:50:52.735  WARNING: WARN:   * ProductsAPI.Tests/TestResults/f6def99c-d835-41be-8ace-4ecfd8a9973c/coverage.cobertura.xml
+20:50:52.736  WARNING: WARN:   * ProductsAPI.Tests/bin/Debug/net9.0/publish/publish/publish/web.config
+20:50:52.736  WARNING: WARN:   * ProductsAPI.Tests/TestResults/8ebe18d7-adc4-4899-8d60-158dda5fae55/coverage.cobertura.xml
+20:50:52.736  WARNING: WARN:   * ProductsAPI.Tests/TestResults/68bb5ad5-60ae-4228-8c23-f80cbb989065/coverage.cobertura.xml
+20:50:52.737  WARNING: WARN:   * ProductsAPI.Tests/bin/Debug/net9.0/publish/web.config
+20:50:52.737  WARNING: WARN:   * ProductsAPI.Tests/TestResults/test-results.xml
+20:50:52.749  WARNING: WARN:   * ProductsAPI.Tests/TestResults/48bec64f-bcd5-4016-a7cf-7da10ab4c7dd/coverage.cobertura.xml
+20:50:52.749  WARNING: WARN: This may lead to missing/broken features in SonarQube
+20:50:52.773  INFO: CPD Executor Calculating CPD for 10 files
+20:50:52.854  INFO: CPD Executor CPD calculation finished (done) | time=80ms
+20:50:52.912  INFO: SCM revision ID 'bfcfdfca9f5eac0465f6857a5304303a66c774c0'
+20:50:55.585  INFO: Analysis report generated in 2613ms, dir size=740.3 kB
+20:50:56.794  INFO: Analysis report compressed in 1213ms, zip size=104.1 kB
+20:50:57.775  INFO: Analysis report uploaded in 978ms
+20:50:57.789  INFO: ------------- Check Quality Gate status
+20:50:57.79  INFO: Waiting for the analysis report to be processed (max 300s)
+20:53:10.254  INFO: QUALITY GATE STATUS: PASSED - View details on http://infra-sonarqube:9000/dashboard?id=dos2526-api-dev_francisco
+20:53:10.715  INFO: Analysis total time: 3:42.804 s
+20:53:10.737  INFO: SonarScanner Engine completed successfully
+20:53:11.882  The scanner engine has finished successfully
+20:53:11.884  Post-processing succeeded.
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Build Docker Image)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+>>> Construindo Imagem: dos2526-api:dev_francisco-2026-01-15-2037 <<<
+[Pipeline] sh
++ docker build -t dos2526-api:dev_francisco-2026-01-15-2037 .
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile:
+#1 transferring dockerfile: 327B 0.2s done
+#1 DONE 0.4s
+
+#2 [internal] load metadata for mcr.microsoft.com/dotnet/sdk:9.0
+#2 DONE 3.1s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B 0.1s done
+#3 DONE 0.2s
+
+#4 [internal] load build context
+#4 DONE 0.0s
+
+#5 [1/6] FROM mcr.microsoft.com/dotnet/sdk:9.0@sha256:c336232f89997e8b03d104edb89253d0e7d7db20779005c0b66da41c0043a9c2
+#5 resolve mcr.microsoft.com/dotnet/sdk:9.0@sha256:c336232f89997e8b03d104edb89253d0e7d7db20779005c0b66da41c0043a9c2
+#5 resolve mcr.microsoft.com/dotnet/sdk:9.0@sha256:c336232f89997e8b03d104edb89253d0e7d7db20779005c0b66da41c0043a9c2 0.2s done
+#5 DONE 0.3s
+
+#4 [internal] load build context
+#4 transferring context: 2.89MB 4.3s
+#4 transferring context: 7.98MB 9.4s
+#4 transferring context: 13.04MB 14.4s
+#4 transferring context: 17.79MB 19.5s
+#4 transferring context: 22.02MB 24.5s
+#4 transferring context: 23.93MB 26.8s done
+#4 DONE 27.1s
+
+#6 [2/6] WORKDIR /app
+#6 CACHED
+
+#7 [3/6] COPY ProductsAPI.csproj ./
+#7 DONE 0.8s
+
+#8 [4/6] RUN dotnet restore
+#8 18.90   Determining projects to restore...
+#8 125.5   Restored /app/ProductsAPI.csproj (in 1.66 min).
+#8 DONE 127.9s
+
+#9 [5/6] COPY . .
+#9 DONE 30.8s
+
+#10 [6/6] RUN dotnet publish ProductsAPI.csproj -c Release -o out
+#10 24.91   Determining projects to restore...
+#10 33.80   Restored /app/ProductsAPI.csproj (in 3.47 sec).
+#10 98.10 /app/Controllers/UserController.cs(93,23): warning CS8618: Non-nullable property 'Username' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/app/ProductsAPI.csproj]
+#10 98.10 /app/Controllers/UserController.cs(94,23): warning CS8618: Non-nullable property 'Email' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/app/ProductsAPI.csproj]
+#10 98.10 /app/Controllers/UserController.cs(95,23): warning CS8618: Non-nullable property 'FullName' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/app/ProductsAPI.csproj]
+#10 98.10 /app/Controllers/UserController.cs(96,23): warning CS8618: Non-nullable property 'Role' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/app/ProductsAPI.csproj]
+#10 102.6   ProductsAPI -> /app/bin/Release/net9.0/ProductsAPI.dll
+#10 106.8   ProductsAPI -> /app/out/
+#10 DONE 108.1s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 184.8s done
+#11 exporting manifest sha256:6f677bdb1dbc4ec0f070e78f66220ac1e7c82f897c40c711621cc93ee5adfa89 0.1s done
+#11 exporting config sha256:c1d6059c546371c9f626f1226afed6bc17d66e6c1c1cec79647033706a5d06d9
+#11 exporting config sha256:c1d6059c546371c9f626f1226afed6bc17d66e6c1c1cec79647033706a5d06d9 0.1s done
+#11 exporting attestation manifest sha256:f2321daf355a555387b6fbb74b9491804773e21dd7825a08fd09d6b29dab8c31
+#11 exporting attestation manifest sha256:f2321daf355a555387b6fbb74b9491804773e21dd7825a08fd09d6b29dab8c31 0.2s done
+#11 exporting manifest list sha256:9d73a5a8b7ce3ff1d54d201cbca9e1459f74924f2c0f1a2c75980a88daea7d86
+#11 exporting manifest list sha256:9d73a5a8b7ce3ff1d54d201cbca9e1459f74924f2c0f1a2c75980a88daea7d86 0.1s done
+#11 naming to docker.io/library/dos2526-api:dev_francisco-2026-01-15-2037
+#11 naming to docker.io/library/dos2526-api:dev_francisco-2026-01-15-2037 0.1s done
+#11 unpacking to docker.io/library/dos2526-api:dev_francisco-2026-01-15-2037
+#11 unpacking to docker.io/library/dos2526-api:dev_francisco-2026-01-15-2037 76.3s done
+#11 DONE 262.5s
+[Pipeline] sh
++ docker tag dos2526-api:dev_francisco-2026-01-15-2037 dos2526-api:latest
+[Pipeline] echo
+>>> Imagem construída com sucesso (Local) <<<
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy PROD)
+Stage "Deploy PROD" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy DEV)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+>>> A iniciar Deploy DEV (dev_francisco) em 8050...
+[Pipeline] sh
++ docker stop dos2526-api-dev_francisco
+Error response from daemon: No such container: dos2526-api-dev_francisco
++ true
+[Pipeline] sh
++ docker rm dos2526-api-dev_francisco
+Error response from daemon: No such container: dos2526-api-dev_francisco
++ true
+[Pipeline] sh
++ docker run -d --restart unless-stopped -p 8050:8080 --name dos2526-api-dev_francisco dos2526-api:dev_francisco-2026-01-15-2037
+3558f50d8cb83b51eeb40d3c21cf43fe2f0d54e7e283c89e79ca5747200a62dc
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] echo
+Pipeline executado com sucesso
+[Pipeline] script
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $GIT_PASS
+[Pipeline] {
