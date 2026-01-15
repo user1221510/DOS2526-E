@@ -103,9 +103,7 @@ pipeline {
             steps {
                 script {
                     echo ">>> Construindo Imagem: ${DOCKER_IMAGE}:${env.TAG_FINAL} <<<"
-                    // Constrói a imagem
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
-                    // Cria tag 'latest' para facilitar uso local se necessário
                     sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
                     
                     echo ">>> Imagem construída com sucesso (Local) <<<"
@@ -113,21 +111,21 @@ pipeline {
             }
         }
 
-        // --- MUDANÇA PRINCIPAL: DEPLOY COM HELM E NAMESPACES ---
-
         stage('Deploy PROD') {
             when { branch 'quality' }
             steps {
                 script {
                     echo ">>> A iniciar Deploy PROD (Helm)..."
                     
-                    // Garante que o namespace 'prod' existe (dry-run evita erro se já existir)
+                    // --- CORREÇÃO AUTOMÁTICA DE CONECTIVIDADE ---
+                    env.KUBECONFIG = "/var/jenkins_home/.kube/config"
+                    sh "sed -i 's/127.0.0.1/host.docker.internal/g' ${env.KUBECONFIG} || true"
+                    sh "sed -i 's/localhost/host.docker.internal/g' ${env.KUBECONFIG} || true"
+                    sh "sed -i 's/certificate-authority-data:.*/insecure-skip-tls-verify: true/g' ${env.KUBECONFIG} || true"
+                    // ---------------------------------------------
+
                     sh "kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -"
                     
-                    // Executa o Helm Upgrade/Install
-                    // --set image.repository: Usa o nome da imagem criada
-                    // --set image.tag: Usa a tag específica do build atual
-                    // --set service.port: Define a porta externa (NodePort ou LoadBalancer)
                     sh """
                         helm upgrade --install dos-api-prod ./charts/products-api \
                         --namespace prod \
@@ -148,10 +146,19 @@ pipeline {
                 script {
                     echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) (Helm)..."
                     
-                    // Define o namespace com base no ambiente (ex: dev_francisco)
+                    // --- CORREÇÃO AUTOMÁTICA DE CONECTIVIDADE ---
+                    // Define onde está o ficheiro config
+                    env.KUBECONFIG = "/var/jenkins_home/.kube/config"
+                    
+                    // Executa os comandos SED automaticamente para corrigir o IP e o SSL
+                    // O '|| true' impede que o pipeline falhe se o texto já tiver sido substituído
+                    sh "sed -i 's/127.0.0.1/host.docker.internal/g' ${env.KUBECONFIG} || true"
+                    sh "sed -i 's/localhost/host.docker.internal/g' ${env.KUBECONFIG} || true"
+                    sh "sed -i 's/certificate-authority-data:.*/insecure-skip-tls-verify: true/g' ${env.KUBECONFIG} || true"
+                    // ---------------------------------------------
+
                     def namespace = env.ENV_NAME
                     
-                    // Garante que o namespace existe
                     sh "kubectl create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -"
                     
                     sh """
