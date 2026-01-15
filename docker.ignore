@@ -1,0 +1,16 @@
+.git
+.github
+.vs
+.idea
+.vscode
+bin/
+obj/
+publish/
+app_publish/
+test-results.xml
+deploy_logs/
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+*.user

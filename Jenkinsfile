@@ -42,8 +42,9 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     script {
+                        // ATUALIZAÇÃO: Adicionado '**/app_publish/**' às exclusões
                         sh """
-                            dotnet sonarscanner begin \
+                        dotnet sonarscanner begin \
                                 /k:"${env.SONAR_PROJECT_KEY}" \
                                 /n:"${env.SONAR_PROJECT_NAME}" \
                                 /v:"${env.TAG_FINAL}" \
@@ -51,7 +52,7 @@ pipeline {
                                 /d:sonar.token="${SONAR_TOKEN}" \
                                 /d:sonar.cs.opencover.reportsPaths="**/coverage.cobertura.xml" \
                                 /d:sonar.qualitygate.wait=true \
-                                /d:sonar.exclusions="**/bin/**,**/obj/**,**/publish/**,**/TestResults/**"
+                                /d:sonar.exclusions="**/bin/**,**/obj/**,**/publish/**,**/app_publish/**,**/TestResults/**"
                         """
                     }
                 }
@@ -82,7 +83,8 @@ pipeline {
 
         stage('Build .NET') {
             steps {
-                sh 'dotnet publish ProductsAPI.csproj -c Release -o publish'
+                // CORREÇÃO CRÍTICA: Mudança da pasta de saída para 'app_publish'
+                sh 'dotnet publish ProductsAPI.csproj -c Release -o app_publish'
             }
         }
 
@@ -101,7 +103,6 @@ pipeline {
                 script {
                     echo ">>> Construindo Imagem: ${DOCKER_IMAGE}:${env.TAG_FINAL} <<<"
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
-                    
                     sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
                     
                     echo ">>> Imagem construída com sucesso (Local) <<<"
