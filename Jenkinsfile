@@ -2,7 +2,9 @@ pipeline {
     agent any
 
     environment {
+        // Nome da imagem base
         DOCKER_IMAGE = "dos2526-api"
+        // Gera uma tag única baseada na data e hora
         DATA_HORA = sh(script: "date +%Y-%m-%d-%H%M", returnStdout: true).trim()
     }
 
@@ -42,7 +44,6 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     script {
-                        // ATUALIZAÇÃO: Adicionado '**/app_publish/**' às exclusões
                         sh """
                         dotnet sonarscanner begin \
                                 /k:"${env.SONAR_PROJECT_KEY}" \
@@ -83,7 +84,7 @@ pipeline {
 
         stage('Build .NET') {
             steps {
-                // CORREÇÃO CRÍTICA: Mudança da pasta de saída para 'app_publish'
+                // Compila para a pasta 'app_publish' para evitar conflitos recursivos
                 sh 'dotnet publish ProductsAPI.csproj -c Release -o app_publish'
             }
         }
@@ -102,7 +103,9 @@ pipeline {
             steps {
                 script {
                     echo ">>> Construindo Imagem: ${DOCKER_IMAGE}:${env.TAG_FINAL} <<<"
+                    // Constrói a imagem
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
+                    // Cria tag 'latest' para facilitar uso local se necessário
                     sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
                     
                     echo ">>> Imagem construída com sucesso (Local) <<<"
@@ -110,18 +113,29 @@ pipeline {
             }
         }
 
+        // --- MUDANÇA PRINCIPAL: DEPLOY COM HELM E NAMESPACES ---
+
         stage('Deploy PROD') {
             when { branch 'quality' }
             steps {
                 script {
-                    def containerName = "dos2526-api-prod"
-                    def port = "8055"
+                    echo ">>> A iniciar Deploy PROD (Helm)..."
                     
-                    echo ">>> A iniciar Deploy PROD em ${port}..."
+                    // Garante que o namespace 'prod' existe (dry-run evita erro se já existir)
+                    sh "kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -"
                     
-                    sh "docker stop ${containerName} || true"
-                    sh "docker rm ${containerName} || true"
-                    sh "docker run -d --restart unless-stopped -p ${port}:8080 --name ${containerName} ${DOCKER_IMAGE}:${env.TAG_FINAL}"
+                    // Executa o Helm Upgrade/Install
+                    // --set image.repository: Usa o nome da imagem criada
+                    // --set image.tag: Usa a tag específica do build atual
+                    // --set service.port: Define a porta externa (NodePort ou LoadBalancer)
+                    sh """
+                        helm upgrade --install dos-api-prod ./charts/products-api \
+                        --namespace prod \
+                        --set image.repository=${DOCKER_IMAGE} \
+                        --set image.tag=${env.TAG_FINAL} \
+                        --set service.port=8055 \
+                        --wait
+                    """
                 }
             }
         }
@@ -132,14 +146,22 @@ pipeline {
             }
             steps {
                 script {
-                    def containerName = "dos2526-api-${env.ENV_NAME}"
-                    def port = "8050"
+                    echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) (Helm)..."
                     
-                    echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) em ${port}..."
+                    // Define o namespace com base no ambiente (ex: dev_francisco)
+                    def namespace = env.ENV_NAME
                     
-                    sh "docker stop ${containerName} || true"
-                    sh "docker rm ${containerName} || true"
-                    sh "docker run -d --restart unless-stopped -p ${port}:8080 --name ${containerName} ${DOCKER_IMAGE}:${env.TAG_FINAL}"
+                    // Garante que o namespace existe
+                    sh "kubectl create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -"
+                    
+                    sh """
+                        helm upgrade --install dos-api-${namespace} ./charts/products-api \
+                        --namespace ${namespace} \
+                        --set image.repository=${DOCKER_IMAGE} \
+                        --set image.tag=${env.TAG_FINAL} \
+                        --set service.port=8050 \
+                        --wait
+                    """
                 }
             }
         }
