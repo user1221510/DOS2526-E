@@ -4,13 +4,13 @@ FROM jenkins/jenkins:lts
 # Passa para Root para ter permissão de instalar pacotes
 USER root
 
-# 1. Instala Docker, Wget e as bibliotecas críticas do .NET
+# 1. Instala Docker, Wget, CURL (Necessário para Helm/K8s) e as bibliotecas críticas do .NET
 # - docker.io: Para o Jenkins falar com o Docker
-# - wget: Para descarregar o instalador da Microsoft
+# - wget & curl: Para descarregar instaladores
 # - libicu-dev: OBRIGATÓRIO para o .NET funcionar (Globalização)
 # - libgdiplus: OBRIGATÓRIO para gerar Imagens/PDFs/Relatórios (System.Drawing)
 RUN apt-get update && \
-    apt-get install -y docker.io wget libicu-dev libgdiplus && \
+    apt-get install -y docker.io wget curl libicu-dev libgdiplus && \
     rm -rf /var/lib/apt/lists/*
 
 # 2. Instalar o .NET 9.0 SDK
@@ -21,11 +21,25 @@ RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod
     apt-get update && \
     apt-get install -y dotnet-sdk-9.0
 
-# 3. Instalar o SonarQube Scanner (Ferramenta Global .NET)
+# 3. Instalar Kubectl (CLI do Kubernetes)
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin/kubectl
+
+# 4. Instalar Helm (Gestor de pacotes do Kubernetes)
+RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
+    chmod 700 get_helm.sh && \
+    ./get_helm.sh && \
+    rm get_helm.sh
+
+# 5. Instalar o SonarQube Scanner (Ferramenta Global .NET)
 RUN dotnet tool install --global dotnet-sonarscanner
 
-# 4. Adicionar as ferramentas .NET ao PATH para o sistema as encontrar
+# 6. Adicionar as ferramentas .NET ao PATH para o sistema as encontrar
 ENV PATH="$PATH:/root/.dotnet/tools"
 
-# 5. Verificação das Instalações
-RUN dotnet --version && docker --version
+# 7. Verificação das Instalações
+RUN dotnet --version && \
+    docker --version && \
+    kubectl version --client && \
+    helm version

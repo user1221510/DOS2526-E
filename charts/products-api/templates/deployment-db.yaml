@@ -1,0 +1,67 @@
+{{- if .Values.database.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "products-api.fullname" . }}-db
+  labels:
+    {{- include "products-api.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "products-api.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        {{- include "products-api.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+    spec:
+      containers:
+        - name: sql-server
+          image: "{{ .Values.database.image.repository }}:{{ .Values.database.image.tag }}"
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: SA_PASSWORD
+              value: {{ .Values.database.password | quote }}
+          
+          # --- CORREÇÃO CRÍTICA DAS PROBES (SQL Server 2022 + Timeouts) ---
+          
+          # Verifica se o container está vivo (Liveness)
+          livenessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                # Caminho atualizado (tools18) e flag -C (Trust Server Certificate)
+                - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -C -Q "SELECT 1"
+            initialDelaySeconds: 45   # Dá 45s para o SQL Server arrancar a primeira vez
+            periodSeconds: 15         # Verifica a cada 15 segundos
+            timeoutSeconds: 5         # IMPORTANTE: Espera 5s pela resposta (evita o erro 'timed out after 1s')
+            failureThreshold: 10      # Só reinicia se falhar 10 vezes seguidas
+          
+          # Verifica se o container está pronto para receber conexões (Readiness)
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -C -Q "SELECT 1"
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5         # IMPORTANTE: Espera 5s pela resposta
+            failureThreshold: 5
+          # ----------------------------------------------------------------
+
+          volumeMounts:
+            - name: mssql-data
+              mountPath: /var/opt/mssql
+      volumes:
+        - name: mssql-data
+          persistentVolumeClaim:
+            claimName: {{ include "products-api.fullname" . }}-db-pvc
+{{- end }}
