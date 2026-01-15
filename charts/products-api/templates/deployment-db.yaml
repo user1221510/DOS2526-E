@@ -28,6 +28,29 @@ spec:
               value: "Y"
             - name: SA_PASSWORD
               value: {{ .Values.database.password | quote }}
+          
+          # Verifica se o container está vivo
+          livenessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -C -Q "SELECT 1"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
+          
+          # Verifica se o container está pronto para aceitar conexões
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -C -Q "SELECT 1"
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          # -----------------------------------------------
+
           volumeMounts:
             - name: mssql-data
               mountPath: /var/opt/mssql

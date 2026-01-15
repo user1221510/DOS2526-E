@@ -28,7 +28,7 @@ pipeline {
 
         stage('Testes + Coverage') {
             steps {
-                // Executa os testes unitários
+                // Executa os testes unitários e gera relatório
                 sh '''
                 dotnet restore
                 dotnet add ProductsAPI.Tests package JunitXml.TestLogger
@@ -40,7 +40,7 @@ pipeline {
         stage('Build & Push Docker') {
             steps {
                 script {
-                    // Usa a credencial do DockerHub (dockerhub-token) para login
+                    // Usa a credencial do DockerHub para login e push
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-token', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh """
                         echo ">>> Login no Docker Hub..."
@@ -58,37 +58,38 @@ pipeline {
         }
 
         stage('Deploy no K8s (Helm)') {
-            // Executa apenas se for a branch 'quality' ou começar por 'dev_'
+            // Executa apenas na branch 'quality' ou branches 'dev_'
             when {
                 expression { env.BRANCH_NAME == 'quality' || env.BRANCH_NAME.startsWith('dev_') }
             }
             steps {
-         script {
+                script {
+                    // 1. Credenciais DockerHub (para configurar o Helm chart)
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-token', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        
+                        // 2. Credenciais Kubernetes (Ficheiro Config Secreto)
                         withCredentials([file(credentialsId: 'kubernet-token', variable: 'KUBECONFIG_FILE')]) {
                             
                             echo ">>> Configuração K8s carregada. A preparar ambiente..."
 
+                            // Script robusto para corrigir acesso ao Docker Desktop (Windows/Linux)
                             sh """
-                            # 1. Copiar o ficheiro secreto para um temporário
+                            # Copia o ficheiro secreto para um temporário editável
                             cp \$KUBECONFIG_FILE k8s-config-temp
                             chmod 600 k8s-config-temp
                             
-                            # 2. Corrigir o endereço de rede (como já tinhas)
+                            # Substitui os endereços locais pelo endereço da rede interna do Docker
                             sed -i 's|kubernetes.docker.internal|host.docker.internal|g' k8s-config-temp
                             sed -i 's|127.0.0.1|host.docker.internal|g' k8s-config-temp
                             sed -i 's|localhost|host.docker.internal|g' k8s-config-temp
                             
-                            # 3. Definir este ficheiro como a configuração ativa
+                            # Define este ficheiro corrigido como a configuração ativa
                             export KUBECONFIG=\$(pwd)/k8s-config-temp
-                            
-                            # --- A CORREÇÃO NOVA ESTÁ AQUI EM BAIXO ---
-                            # Removemos a autoridade de certificação antiga
-                            kubectl config unset clusters.docker-desktop.certificate-authority-data
-                            # Dizemos ao kubectl para não validar o certificado SSL (ignora o erro do nome)
-                            kubectl config set-cluster docker-desktop --insecure-skip-tls-verify=true
-                            # -------------------------------------------
 
+                            # Remove dados de certificação antigos e força aceitação de SSL inseguro (ambiente dev)
+                            kubectl config unset clusters.docker-desktop.certificate-authority-data
+                            kubectl config set-cluster docker-desktop --insecure-skip-tls-verify=true
+                            
                             echo ">>> A testar ligação ao Cluster..."
                             kubectl get nodes
                             
@@ -97,7 +98,7 @@ pipeline {
                             # Garante que o namespace existe
                             kubectl create namespace ${KubeNamespace} --dry-run=client -o yaml | kubectl apply -f -
                             
-                            # Executa o Helm Upgrade
+                            # Executa o Helm Upgrade com as variáveis dinâmicas
                             helm upgrade --install ${ReleaseName} ./charts/products-api \
                               --namespace ${KubeNamespace} \
                               --set app.image.repository=$DOCKER_USER/${IMAGE_NAME} \
@@ -106,6 +107,45 @@ pipeline {
                             """
                         }
                     }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                // Bloco para recuperar os logs e enviar para o GitHub
+                // Requer a credencial 'github-token' configurada no Jenkins
+                withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                    
+                    def pasta = "deploy_logs"
+                    def nomeFicheiro = "${env.TAG_FINAL}_log.txt"
+                    def caminhoFicheiro = "${pasta}/${nomeFicheiro}"
+                    
+                    // Captura as últimas 10.000 linhas de log desta execução
+                    def logs = currentBuild.rawBuild.getLog(10000)
+                    def logContent = logs.join("\n")
+                    
+                    echo ">>> A gravar logs de deployment no Git..."
+                    
+                    sh """
+                        # Configuração temporária do Git para o commit
+                        git config user.email "noreply@jenkins.log"
+                        git config user.name "JenkinsLog"
+                        
+                        mkdir -p ${pasta}
+                    """
+                    
+                    // Escreve o log no disco
+                    writeFile file: caminhoFicheiro, text: logContent
+
+                    // Faz commit e push. 
+                    sh """
+                        git add ${caminhoFicheiro}
+                        git commit -m "Log Deploy: ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
+                        git push https://${GIT_PASS}@github.com/user1221510/DOS2526-E.git HEAD:${env.BRANCH_NAME}
+                    """
                 }
             }
         }
