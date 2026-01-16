@@ -16,7 +16,6 @@ pipeline {
         stage('Setup Names') {
             steps {
                 script {
-                    // Substitui underscores por hífens para o Kubernetes aceitar o nome
                     def branchClean = env.BRANCH_NAME.toLowerCase().replace('_', '-')
                     
                     if (branchClean == 'quality') {
@@ -30,11 +29,6 @@ pipeline {
                     }
                     
                     env.TAG_FINAL = "${env.ENV_NAME}-${env.DATA_HORA}"
-                    
-                    echo ">>> CONFIGURAÇÃO <<<"
-                    echo "Branch Real: ${env.BRANCH_NAME}"
-                    echo "Ambiente:    ${env.ENV_NAME}"
-                    echo "Tag Final:   ${env.TAG_FINAL}"
                 }
             }
         }
@@ -59,14 +53,9 @@ pipeline {
             }
         }
 
-        stage('Restore') {
+        stage('Restore & Test') {
             steps {
                 sh 'dotnet restore'
-            }
-        }
-
-        stage('Test + Coverage') {
-            steps {
                 sh '''
                 dotnet add ProductsAPI.Tests package JunitXml.TestLogger
                 dotnet test ProductsAPI.Tests \
@@ -75,24 +64,15 @@ pipeline {
                 '''
             }
             post {
-                always {
-                    junit '**/test-results.xml'
-                }
+                always { junit '**/test-results.xml' }
             }
         }
 
-        stage('Build .NET') {
+        stage('Build & Analysis End') {
             steps {
                 sh 'dotnet publish ProductsAPI.csproj -c Release -o app_publish'
-            }
-        }
-
-        stage('SonarQube End') {
-            steps {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                    script {
-                        sh 'dotnet sonarscanner end /d:sonar.token="${SONAR_TOKEN}"'
-                    }
+                    sh 'dotnet sonarscanner end /d:sonar.token="${SONAR_TOKEN}"'
                 }
             }
         }
@@ -102,104 +82,44 @@ pipeline {
                 script {
                     echo ">>> Construindo Imagem: ${DOCKER_IMAGE}:${env.TAG_FINAL} <<<"
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
+                    
+                    // IMPORTANTE: Para o ArgoCD funcionar localmente, precisamos de garantir 
+                    // que a tag 'latest' aponta sempre para o build mais recente.
                     sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
-                    
-                    echo ">>> Imagem construída com sucesso (Local) <<<"
                 }
             }
         }
 
-        stage('Deploy PROD') {
-            when { branch 'quality' }
-            steps {
-                script {
-                    echo ">>> A iniciar Deploy PROD (Helm)..."
-                    
-                    env.KUBECONFIG = "/var/jenkins_home/.kube/config"
-                    sh "sed -i 's/127.0.0.1/host.docker.internal/g' ${env.KUBECONFIG} || true"
-                    sh "sed -i 's/localhost/host.docker.internal/g' ${env.KUBECONFIG} || true"
-                    sh "sed -i 's/certificate-authority-data:.*/insecure-skip-tls-verify: true/g' ${env.KUBECONFIG} || true"
-
-                    sh "kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -"
-                    
-                    // CORREÇÃO CRÍTICA: Adicionado prefixo 'app.' para corresponder ao values.yaml
-                    sh """
-                        helm upgrade --install dos-api-prod ./charts/products-api \
-                        --namespace prod \
-                        --set app.image.repository=${DOCKER_IMAGE} \
-                        --set app.image.tag=${env.TAG_FINAL} \
-                        --set app.image.pullPolicy=Never \
-                        --set app.service.port=8055 \
-                        --timeout 10m \
-                        --wait
-                    """
-                }
-            }
-        }
-
-        stage('Deploy DEV') {
+        stage('GitOps Update') {
+            // Executa apenas nas branches certas
             when {
-                expression { env.BRANCH_NAME.toLowerCase().startsWith('dev_') }
+                expression { env.BRANCH_NAME.toLowerCase().startsWith('dev_') || env.BRANCH_NAME == 'quality' }
             }
             steps {
                 script {
-                    echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) (Helm)..."
+                    echo ">>> Atualizando versão no Git para o ArgoCD..."
                     
-                    env.KUBECONFIG = "/var/jenkins_home/.kube/config"
-                    sh "sed -i 's/127.0.0.1/host.docker.internal/g' ${env.KUBECONFIG} || true"
-                    sh "sed -i 's/localhost/host.docker.internal/g' ${env.KUBECONFIG} || true"
-                    sh "sed -i 's/certificate-authority-data:.*/insecure-skip-tls-verify: true/g' ${env.KUBECONFIG} || true"
-
-                    def namespace = env.ENV_NAME
-                    
-                    sh "kubectl create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -"
-                    
-                    // CORREÇÃO CRÍTICA: Adicionado prefixo 'app.' para corresponder ao values.yaml
-                    sh """
-                        helm upgrade --install dos-api-${namespace} ./charts/products-api \
-                        --namespace ${namespace} \
-                        --set app.image.repository=${DOCKER_IMAGE} \
-                        --set app.image.tag=${env.TAG_FINAL} \
-                        --set app.image.pullPolicy=Never \
-                        --set app.service.port=8050 \
-                        --timeout 10m \
-                        --wait
-                    """
+                    withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                        sh """
+                            # 1. Configurar identidade do Git
+                            git config user.email "jenkins@pipeline.com"
+                            git config user.name "Jenkins Pipeline"
+                            
+                            # 2. Atualizar o values.yaml
+                            # Substitui a primeira ocorrência de tag: "..." pela nova tag
+                            sed -i '0,/tag: ".*"/s//tag: "${env.TAG_FINAL}"/' charts/products-api/values.yaml
+                            
+                            # 3. Commit e Push
+                            git add charts/products-api/values.yaml
+                            
+                            # O [skip ci] impede que este commit dispare outro pipeline (loop infinito)
+                            git commit -m "GitOps: Deploy version ${env.TAG_FINAL} [skip ci]"
+                            
+                            git push https://${GIT_PASS}@github.com/user1221510/DOS2526-E.git HEAD:${env.BRANCH_NAME}
+                        """
+                    }
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo "Pipeline executado com sucesso"
-            script {
-                withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                    
-                    def pasta = "deploy_logs"
-                    def caminhoFicheiro = "${pasta}/${env.TAG_FINAL}_log.txt"
-                    
-                    def logs = currentBuild.rawBuild.getLog(10000)
-                    def logContent = logs.join("\n")
-                    
-                    sh """
-                        git config user.email "noreply@jenkins.log"
-                        git config user.name "JenkinsLog"
-                        mkdir -p ${pasta}
-                    """
-                    
-                    writeFile file: caminhoFicheiro, text: logContent
-
-                    sh """
-                        git add ${caminhoFicheiro}
-                        git commit -m "JenkinsLog: ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
-                        git push https://${GIT_PASS}@github.com/user1221510/DOS2526-E.git HEAD:${env.BRANCH_NAME}
-                    """
-                }
-            }
-        }
-        failure {
-            echo "Pipeline falhou"
         }
     }
 }

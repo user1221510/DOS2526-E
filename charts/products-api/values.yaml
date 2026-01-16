@@ -2,9 +2,8 @@ app:
   replicaCount: 1
   image:
     repository: dos2526-api
-    tag: "latest"
-    # ALTERADO: De 'Always' para 'IfNotPresent' para evitar erros de pull local
-    pullPolicy: IfNotPresent
+    tag: "latest"            # <--- O Jenkins vai procurar esta linha 'tag:' para mudar
+    pullPolicy: IfNotPresent # <--- Mantenha 'IfNotPresent' para funcionar localmente
   service:
     type: ClusterIP
     port: 80
