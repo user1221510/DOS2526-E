@@ -18,7 +18,7 @@ pipeline {
         stage('Setup Names') {
             steps {
                 script {
-                    // CORREÇÃO: .replace('_', '-') para garantir nomes válidos no Kubernetes
+                    // CORREÇÃO 1: Substitui underscores por hífens para o Kubernetes aceitar o nome
                     def branchClean = env.BRANCH_NAME.toLowerCase().replace('_', '-')
                     
                     if (branchClean == 'quality') {
@@ -85,6 +85,7 @@ pipeline {
 
         stage('Build .NET') {
             steps {
+                // Usa pasta dedicada para evitar conflitos recursivos
                 sh 'dotnet publish ProductsAPI.csproj -c Release -o app_publish'
             }
         }
@@ -117,6 +118,7 @@ pipeline {
                 script {
                     echo ">>> A iniciar Deploy PROD (Helm)..."
                     
+                    // Configuração automática de conectividade Jenkins -> Docker Desktop
                     env.KUBECONFIG = "/var/jenkins_home/.kube/config"
                     sh "sed -i 's/127.0.0.1/host.docker.internal/g' ${env.KUBECONFIG} || true"
                     sh "sed -i 's/localhost/host.docker.internal/g' ${env.KUBECONFIG} || true"
@@ -124,12 +126,15 @@ pipeline {
 
                     sh "kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -"
                     
+                    // CORREÇÃO 3: pullPolicy=Never e timeout aumentado
                     sh """
                         helm upgrade --install dos-api-prod ./charts/products-api \
                         --namespace prod \
                         --set image.repository=${DOCKER_IMAGE} \
                         --set image.tag=${env.TAG_FINAL} \
+                        --set image.pullPolicy=Never \
                         --set service.port=8055 \
+                        --timeout 10m \
                         --wait
                     """
                 }
@@ -144,6 +149,7 @@ pipeline {
                 script {
                     echo ">>> A iniciar Deploy DEV (${env.ENV_NAME}) (Helm)..."
                     
+                    // Configuração automática de conectividade Jenkins -> Docker Desktop
                     env.KUBECONFIG = "/var/jenkins_home/.kube/config"
                     sh "sed -i 's/127.0.0.1/host.docker.internal/g' ${env.KUBECONFIG} || true"
                     sh "sed -i 's/localhost/host.docker.internal/g' ${env.KUBECONFIG} || true"
@@ -153,12 +159,15 @@ pipeline {
                     
                     sh "kubectl create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -"
                     
+                    // CORREÇÃO 3: pullPolicy=Never e timeout aumentado
                     sh """
                         helm upgrade --install dos-api-${namespace} ./charts/products-api \
                         --namespace ${namespace} \
                         --set image.repository=${DOCKER_IMAGE} \
                         --set image.tag=${env.TAG_FINAL} \
+                        --set image.pullPolicy=Never \
                         --set service.port=8050 \
+                        --timeout 10m \
                         --wait
                     """
                 }
