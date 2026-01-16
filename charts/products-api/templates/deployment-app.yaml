@@ -19,6 +19,7 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
+          # Garanta que estas variáveis correspondem à estrutura do values.yaml
           image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
           imagePullPolicy: {{ .Values.app.image.pullPolicy }}
           ports:
@@ -29,5 +30,4 @@ spec:
             - name: ASPNETCORE_ENVIRONMENT
               value: {{ .Values.app.env.environment }}
             - name: ConnectionStrings__DefaultConnection
-              # CORREÇÃO: Removida a aspa extra no final
               value: "Server={{ include "products-api.fullname" . }}-db;Database=master;User Id=sa;Password={{ .Values.database.password }};TrustServerCertificate=True;"
