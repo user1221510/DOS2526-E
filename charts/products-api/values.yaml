@@ -2,7 +2,7 @@ app:
   replicaCount: 1
   image:
     repository: dos2526-api
-    tag: "latest"            # <--- O Jenkins vai procurar esta linha 'tag:' para mudar
+    tag: "dev-francisco-2026-01-16-0154"            # <--- O Jenkins vai procurar esta linha 'tag:' para mudar
     pullPolicy: IfNotPresent # <--- Mantenha 'IfNotPresent' para funcionar localmente
   service:
     type: ClusterIP
