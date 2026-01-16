@@ -1,20 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: dos-api-dev
+  name: dos-api-gitops
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/user1221510/DOS2526-E.git
-    targetRevision: dev_francisco  # A sua branch de trabalho
+    targetRevision: HEAD           
     path: charts/products-api
     helm:
       valueFiles:
         - values.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: dev-francisco
+    namespace: default           
   syncPolicy:
     automated:
       prune: true

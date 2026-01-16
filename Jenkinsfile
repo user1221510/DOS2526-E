@@ -19,10 +19,12 @@ pipeline {
                     def branchClean = env.BRANCH_NAME.toLowerCase().replace('_', '-')
                     
                     if (branchClean == 'quality') {
+                        // Se for quality, o ambiente é 'prod'
                         env.ENV_NAME = 'prod'
                         env.SONAR_PROJECT_NAME = "DOS API [PROD]"
                         env.SONAR_PROJECT_KEY = "dos2526-api-prod"
                     } else {
+                        // Se for dev_francisco, o ambiente é 'dev-francisco'
                         env.ENV_NAME = branchClean
                         env.SONAR_PROJECT_NAME = "DOS API [${branchClean}]"
                         env.SONAR_PROJECT_KEY = "dos2526-api-${branchClean}"
@@ -38,7 +40,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     script {
                         sh """
-                        dotnet sonarscanner begin \
+                            dotnet sonarscanner begin \
                                 /k:"${env.SONAR_PROJECT_KEY}" \
                                 /n:"${env.SONAR_PROJECT_NAME}" \
                                 /v:"${env.TAG_FINAL}" \
@@ -82,22 +84,19 @@ pipeline {
                 script {
                     echo ">>> Construindo Imagem: ${DOCKER_IMAGE}:${env.TAG_FINAL} <<<"
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
-                    
-                    // IMPORTANTE: Para o ArgoCD funcionar localmente, precisamos de garantir 
-                    // que a tag 'latest' aponta sempre para o build mais recente.
                     sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
                 }
             }
         }
 
         stage('GitOps Update') {
-            // Executa apenas nas branches certas
+            // Executa apenas se for branch dev_ ou quality
             when {
                 expression { env.BRANCH_NAME.toLowerCase().startsWith('dev_') || env.BRANCH_NAME == 'quality' }
             }
             steps {
                 script {
-                    echo ">>> Atualizando versão no Git para o ArgoCD..."
+                    echo ">>> GitOps: Configurando ambiente [${env.ENV_NAME}] na branch [${env.BRANCH_NAME}]..."
                     
                     withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                         sh """
@@ -105,15 +104,32 @@ pipeline {
                             git config user.email "jenkins@pipeline.com"
                             git config user.name "Jenkins Pipeline"
                             
-                            # 2. Atualizar o values.yaml
-                            # Substitui a primeira ocorrência de tag: "..." pela nova tag
-                            sed -i '0,/tag: ".*"/s//tag: "${env.TAG_FINAL}"/' charts/products-api/values.yaml
+                            # Faz pull para garantir a versão mais recente
+                            git pull origin ${env.BRANCH_NAME}
                             
-                            # 3. Commit e Push
-                            git add charts/products-api/values.yaml
+                            # -----------------------------------------------------
+                            # 2. ATUALIZAR VALUES.YAML (Tag da Imagem)
+                            # -----------------------------------------------------
+                            sed -i 's/tag: ".*"/tag: "${env.TAG_FINAL}"/' charts/products-api/values.yaml
                             
-                            # O [skip ci] impede que este commit dispare outro pipeline (loop infinito)
-                            git commit -m "GitOps: Deploy version ${env.TAG_FINAL} [skip ci]"
+                            # -----------------------------------------------------
+                            # 3. ATUALIZAR ARGOCD-APP.YAML (Branch e Namespace)
+                            # -----------------------------------------------------
+                            
+                            # A. Define a Branch que o ArgoCD vai ler (targetRevision)
+                            sed -i "s|targetRevision: .*|targetRevision: ${env.BRANCH_NAME}|" argocd-app.yaml
+
+                            # B. Define o Namespace de destino (dentro do bloco destination)
+                            # Procura o bloco entre 'destination:' e 'syncPolicy:' e altera o namespace lá dentro
+                            sed -i "/destination:/,/syncPolicy:/ s/namespace: .*/namespace: ${env.ENV_NAME}/" argocd-app.yaml
+
+                            # -----------------------------------------------------
+                            # 4. COMMIT E PUSH
+                            # -----------------------------------------------------
+                            git add charts/products-api/values.yaml argocd-app.yaml
+                            
+                            # O [skip ci] impede loop infinito
+                            git commit -m "GitOps: Deploy env [${env.ENV_NAME}] version ${env.TAG_FINAL} [skip ci]"
                             
                             git push https://${GIT_PASS}@github.com/user1221510/DOS2526-E.git HEAD:${env.BRANCH_NAME}
                         """
