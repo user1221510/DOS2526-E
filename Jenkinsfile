@@ -51,7 +51,7 @@ pipeline {
                                 /k:"${env.SONAR_PROJECT_KEY}" \
                                 /n:"${env.SONAR_PROJECT_NAME}" \
                                 /v:"${env.TAG_FINAL}" \
-                                /d:sonar.host.url="http://infra-sonarqube:9000" \
+                                /d:sonar.host.url="http://host.docker.internal:9001" \
                                 /d:sonar.token="${SONAR_TOKEN}" \
                                 /d:sonar.cs.opencover.reportsPaths="**/coverage.cobertura.xml" \
                                 /d:sonar.qualitygate.wait=true \
