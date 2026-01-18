@@ -2,12 +2,15 @@ app:
   replicaCount: 1
   image:
     repository: dos2526-api
-    tag: "latest"                 
-    pullPolicy: IfNotPresent       
+    tag: "latest"
+    pullPolicy: IfNotPresent
   service:
-    type: ClusterIP
+    # ALTERADO: NodePort permite acesso externo (http://localhost:30050)
+    type: NodePort 
     port: 80
     targetPort: 8080
+    # Porta padrão (será alterada pelo Jenkins para 30050 ou 30055)
+    nodePort: 30050
   env:
     environment: "Development"
 
