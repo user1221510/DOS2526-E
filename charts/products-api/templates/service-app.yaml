@@ -6,14 +6,14 @@ metadata:
     {{- include "products-api.labels" . | nindent 4 }}
     app.kubernetes.io/component: api
 spec:
-  # 1. Lê o tipo (NodePort) do values.yaml
+  # Lê o tipo que o Jenkins definiu (NodePort)
   type: {{ .Values.app.service.type }}
   ports:
     - port: {{ .Values.app.service.port }}
       targetPort: {{ .Values.app.service.targetPort }}
       protocol: TCP
       name: http
-      # 2. SE for NodePort, atribui a porta 30050 (ou 30055)
+      # Só aplica a porta 30050 se o tipo for NodePort
       {{- if eq .Values.app.service.type "NodePort" }}
       nodePort: {{ .Values.app.service.nodePort }}
       {{- end }}

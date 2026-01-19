@@ -2,15 +2,13 @@ app:
   replicaCount: 1
   image:
     repository: dos2526-api
-    tag: "dev-francisco-2026-01-19-0007"
+    tag: "latest"
     pullPolicy: IfNotPresent
   service:
-    # Mudar de ClusterIP para NodePort para expor para fora
-    type: NodePort 
+    type: ClusterIP      # O Jenkins vai mudar isto para NodePort
     port: 80
     targetPort: 8080
-    # AQUI ESTÁ A CHAVE: Define a porta fixa no teu PC
-    nodePort: 30050 
+    nodePort: 30000      # O Jenkins vai mudar isto para 30050
   env:
     environment: "Development"
 

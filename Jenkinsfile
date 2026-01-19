@@ -22,20 +22,17 @@ pipeline {
                         env.ENV_NAME = 'prod'
                         env.SONAR_PROJECT_NAME = "DOS API [PROD]"
                         env.SONAR_PROJECT_KEY = "dos2526-api-prod"
+                        // Porta Automática para PROD
                         env.NODE_PORT = "30055"
                     } else {
                         env.ENV_NAME = branchClean
                         env.SONAR_PROJECT_NAME = "DOS API [${branchClean}]"
                         env.SONAR_PROJECT_KEY = "dos2526-api-${branchClean}"
+                        // Porta Automática para DEV
                         env.NODE_PORT = "30050"
                     }
                     
                     env.TAG_FINAL = "${env.ENV_NAME}-${env.DATA_HORA}"
-                    
-                    echo ">>> CONFIGURAÇÃO <<<"
-                    echo "Ambiente: ${env.ENV_NAME}"
-                    echo "Tag:      ${env.TAG_FINAL}"
-                    echo "Porta:    ${env.NODE_PORT}"
                 }
             }
         }
@@ -44,8 +41,6 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     script {
-                        // ALTERAÇÃO: Removido '/d:sonar.qualitygate.wait=true' para evitar timeout
-                        // Mantido o URL que funcionou (host.docker.internal:9001)
                         sh """
                         dotnet sonarscanner begin \
                                 /k:"${env.SONAR_PROJECT_KEY}" \
@@ -88,10 +83,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo ">>> Construindo Imagem: ${DOCKER_IMAGE}:${env.TAG_FINAL} <<<"
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
-                    
-                    // Atualiza a tag latest para uso local do ArgoCD
                     sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
                 }
             }
@@ -103,45 +95,41 @@ pipeline {
             }
             steps {
                 script {
-                    echo ">>> Atualizando Git para ArgoCD (Tag: ${env.TAG_FINAL} | Port: ${env.NODE_PORT})..."
+                    echo ">>> A CONFIGURAR PORTAS AUTOMATICAMENTE NO GIT..."
+                    echo ">>> Porta definida: ${env.NODE_PORT}"
                     
                     withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                         sh """
                             git config user.email "jenkins@pipeline.com"
                             git config user.name "Jenkins Pipeline"
                             
-                            # Garante que temos a versão mais recente antes de editar
                             git pull origin ${env.BRANCH_NAME}
                             
-                            # 1. Atualizar a Tag da Imagem
+                            # --- AQUI ESTÁ A MAGIA DA ATRIBUIÇÃO AUTOMÁTICA ---
+                            
+                            # 1. Define a Tag da Imagem
                             sed -i '0,/tag: ".*"/s//tag: "${env.TAG_FINAL}"/' charts/products-api/values.yaml
                             
-                            # 2. Atualizar a Porta (NodePort)
+                            # 2. Força o tipo de serviço para NodePort (para expor no PC)
+                            sed -i 's/type: ClusterIP/type: NodePort/' charts/products-api/values.yaml
+                            
+                            # 3. Define a porta específica (30050 ou 30055)
                             sed -i 's/nodePort: [0-9]*/nodePort: ${env.NODE_PORT}/' charts/products-api/values.yaml
 
-                            # 3. Configurar ArgoCD App (Branch e Namespace)
+                            # 4. Configura o ArgoCD App
                             sed -i "s|targetRevision: .*|targetRevision: ${env.BRANCH_NAME}|" argocd-app.yaml
                             sed -i "/destination:/,/syncPolicy:/ s/namespace: .*/namespace: ${env.ENV_NAME}/" argocd-app.yaml
 
-                            # 4. Commit e Push
+                            # 5. Envia para o Git
                             git add charts/products-api/values.yaml argocd-app.yaml
                             
-                            git commit -m "GitOps: Deploy [${env.ENV_NAME}] port:${env.NODE_PORT} ver:${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
+                            git commit -m "GitOps: Auto-assign Port ${env.NODE_PORT} & Ver ${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
                             
                             git push https://${GIT_PASS}@github.com/user1221510/DOS2526-E.git HEAD:${env.BRANCH_NAME}
                         """
                     }
                 }
             }
-        }
-    }
-    
-    post {
-        success {
-            echo "Pipeline GitOps executado com sucesso. Aceda à API em http://localhost:${env.NODE_PORT}/swagger"
-        }
-        failure {
-            echo "Pipeline falhou"
         }
     }
 }
