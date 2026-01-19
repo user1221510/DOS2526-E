@@ -2,13 +2,13 @@ app:
   replicaCount: 1
   image:
     repository: dos2526-api
-    tag: "latest"
+    tag: "dev-francisco-2026-01-19-0130"
     pullPolicy: IfNotPresent
   service:
-    type: ClusterIP      # O Jenkins vai mudar isto para NodePort
+    type: NodePort      # O Jenkins vai mudar isto para NodePort
     port: 80
     targetPort: 8080
-    nodePort: 30000      # O Jenkins vai mudar isto para 30050
+    nodePort: 30050      # O Jenkins vai mudar isto para 30050
   env:
     environment: "Development"
 
