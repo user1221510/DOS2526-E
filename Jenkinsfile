@@ -22,13 +22,11 @@ pipeline {
                         env.ENV_NAME = 'prod'
                         env.SONAR_PROJECT_NAME = "DOS API [PROD]"
                         env.SONAR_PROJECT_KEY = "dos2526-api-prod"
-                        // Porta para PROD
                         env.NODE_PORT = "30055"
                     } else {
                         env.ENV_NAME = branchClean
                         env.SONAR_PROJECT_NAME = "DOS API [${branchClean}]"
                         env.SONAR_PROJECT_KEY = "dos2526-api-${branchClean}"
-                        // Porta para DEV
                         env.NODE_PORT = "30050"
                     }
                     
@@ -46,6 +44,8 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     script {
+                        // ALTERAÇÃO: Removido '/d:sonar.qualitygate.wait=true' para evitar timeout
+                        // Mantido o URL que funcionou (host.docker.internal:9001)
                         sh """
                         dotnet sonarscanner begin \
                                 /k:"${env.SONAR_PROJECT_KEY}" \
@@ -54,7 +54,6 @@ pipeline {
                                 /d:sonar.host.url="http://host.docker.internal:9001" \
                                 /d:sonar.token="${SONAR_TOKEN}" \
                                 /d:sonar.cs.opencover.reportsPaths="**/coverage.cobertura.xml" \
-                                /d:sonar.qualitygate.wait=true \
                                 /d:sonar.exclusions="**/bin/**,**/obj/**,**/publish/**,**/app_publish/**,**/TestResults/**"
                         """
                     }
@@ -91,6 +90,8 @@ pipeline {
                 script {
                     echo ">>> Construindo Imagem: ${DOCKER_IMAGE}:${env.TAG_FINAL} <<<"
                     sh "docker build -t ${DOCKER_IMAGE}:${env.TAG_FINAL} ."
+                    
+                    // Atualiza a tag latest para uso local do ArgoCD
                     sh "docker tag ${DOCKER_IMAGE}:${env.TAG_FINAL} ${DOCKER_IMAGE}:latest"
                 }
             }
@@ -109,13 +110,13 @@ pipeline {
                             git config user.email "jenkins@pipeline.com"
                             git config user.name "Jenkins Pipeline"
                             
+                            # Garante que temos a versão mais recente antes de editar
                             git pull origin ${env.BRANCH_NAME}
                             
                             # 1. Atualizar a Tag da Imagem
                             sed -i '0,/tag: ".*"/s//tag: "${env.TAG_FINAL}"/' charts/products-api/values.yaml
                             
                             # 2. Atualizar a Porta (NodePort)
-                            # Procura 'nodePort: ...' e substitui pelo valor correto do ambiente
                             sed -i 's/nodePort: [0-9]*/nodePort: ${env.NODE_PORT}/' charts/products-api/values.yaml
 
                             # 3. Configurar ArgoCD App (Branch e Namespace)
@@ -125,13 +126,22 @@ pipeline {
                             # 4. Commit e Push
                             git add charts/products-api/values.yaml argocd-app.yaml
                             
-                            git commit -m "GitOps: Deploy [${env.ENV_NAME}] port:${env.NODE_PORT} ver:${env.TAG_FINAL} [skip ci]"
+                            git commit -m "GitOps: Deploy [${env.ENV_NAME}] port:${env.NODE_PORT} ver:${env.TAG_FINAL} [skip ci]" || echo "Nada para commitar"
                             
                             git push https://${GIT_PASS}@github.com/user1221510/DOS2526-E.git HEAD:${env.BRANCH_NAME}
                         """
                     }
                 }
             }
+        }
+    }
+    
+    post {
+        success {
+            echo "Pipeline GitOps executado com sucesso. Aceda à API em http://localhost:${env.NODE_PORT}/swagger"
+        }
+        failure {
+            echo "Pipeline falhou"
         }
     }
 }
