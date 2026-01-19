@@ -7,14 +7,14 @@ spec:
   project: default
   source:
     repoURL: https://github.com/user1221510/DOS2526-E.git
-    targetRevision: HEAD           
+    targetRevision: dev_francisco
     path: charts/products-api
     helm:
       valueFiles:
         - values.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: default           
+    namespace: dev-francisco
   syncPolicy:
     automated:
       prune: true

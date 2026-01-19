@@ -2,7 +2,7 @@ app:
   replicaCount: 1
   image:
     repository: dos2526-api
-    tag: "latest"
+    tag: "dev-francisco-2026-01-19-0007"
     pullPolicy: IfNotPresent
   service:
     # ALTERADO: NodePort permite acesso externo (http://localhost:30050)
