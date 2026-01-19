@@ -5,12 +5,12 @@ app:
     tag: "dev-francisco-2026-01-19-0007"
     pullPolicy: IfNotPresent
   service:
-    # ALTERADO: NodePort permite acesso externo (http://localhost:30050)
+    # Mudar de ClusterIP para NodePort para expor para fora
     type: NodePort 
     port: 80
     targetPort: 8080
-    # Porta padrão (será alterada pelo Jenkins para 30050 ou 30055)
-    nodePort: 30050
+    # AQUI ESTÁ A CHAVE: Define a porta fixa no teu PC
+    nodePort: 30050 
   env:
     environment: "Development"
 
